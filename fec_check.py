@@ -1117,14 +1117,30 @@ class FECCheck:
         eoy_aa_course = ""
         
         # S1 Check: Check S1 failed courses in simulated PY record if PY record does not qualify yet
-        # S1 Check: Check S1 failed courses in simulated PS2 record if PS2 record does not qualify yet
-        # (meaning if they pass all S2 courses, they would graduate except for one failed S1 course)
-        strec_pS2 = self.flagsem2passed(strec)
-        pc_pS2 = self.getprogressioninfo(strec_pS2)
-        if pc_pS2['pc'] != 'QUAL':
-            has_aa, aa_c = self.check_additional_assessment(strec_pS2, simulated=True)
-            if has_aa:
-                midyear_aa_course = aa_c
+        # S1 Check: Check S1 failed courses in simulated PS2 record (with S2 courses and S1 supps assumed passed)
+        strec_midyear_sim = self.flagsem2passed(strec)
+        srec_sim = strec_midyear_sim['srec'].copy()
+        srecr = srec_sim['perc'].astype(str)
+        pipS = srecr.str.contains(r'[0-9].*S', regex=True, na=False)
+        pipOSS = srecr.str.contains('OSS', regex=False, na=False)
+        pipDE = srecr == 'DE'
+        pipOS = srecr == 'OS'
+        pip_supp = (srec_sim['yt'] == cyear) & (pipS | pipOSS | pipDE | pipOS)
+        srec_sim.loc[pip_supp, 'perc'] = 'PA'
+        srec_sim.loc[pip_supp, 'symbol'] = 'PA'
+        srec_sim.loc[pip_supp, 'cre'] = srec_sim.loc[pip_supp, 'crt']
+        
+        ystats_sim = strec_midyear_sim['ystats'].copy()
+        numscr = srec_sim.loc[pip_supp, 'crt'].sum()
+        if numscr > 0:
+            ystats_sim.iloc[-1, ystats_sim.columns.get_loc('TE')] += numscr
+            ystats_sim.iloc[-1, ystats_sim.columns.get_loc('CE')] += numscr
+        strec_midyear_sim['srec'] = srec_sim
+        strec_midyear_sim['ystats'] = ystats_sim
+
+        has_aa, aa_c = self.check_additional_assessment(strec_midyear_sim, simulated=True)
+        if has_aa:
+            midyear_aa_course = aa_c
                 
         # EOY Check: Check failed courses in actual record if actual record does not qualify yet
         if pcs['pc'] != 'QUAL':
