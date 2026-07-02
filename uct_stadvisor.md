@@ -413,6 +413,37 @@ When the user explicitly asks for a synthetic record or asks "what if they pass 
 
 ---
 
+## 12. ADDITIONAL ASSESSMENT & ACADEMIC CYCLE STAGES
+
+Advisors must evaluate students differently depending on the stage of the academic cycle and determine eligibility for Additional Assessments (last-course supplementary exams).
+
+### A. The 6 Academic Cycle Stages:
+1. **snapshot**: Pre-registration snapshot. Progression code reflects the current actual status (`Curr`).
+2. **cleanup**: Post-registration curriculum cleanup.
+   * If a student is predicted to qualify at the end of the year (April graduation): **`POTA`** (Potential April Qualifier).
+   * If they will finish all requirements by June (September graduation): **`POTS`** (Potential September Qualifier).
+   * If even in the "Pass All" (`PY`) simulation they will fail progression, warn of exclusion (`RENN` / `FECR`) early.
+3. **midyear-exam**: After first-semester exams.
+   * Flag students who qualify actual (`QUAL`) or would qualify assuming outstanding first-semester supps/DE are passed (`QUAS`).
+   * Flag eligibility for **mid-year Additional Assessment (S1)**.
+4. **midyear-supp**: After first-semester supplementaries are written.
+5. **eoy-exam**: After second-semester exams (Main EOY FEC).
+   * Assign definitive codes (`QUAL`, `CONT`, `RENN`, `FECR`) or conditional EOY codes (`QUAS` if supps make them qualify, `SUPP` if failing supps leads to exclusion, `FECP` if borderline).
+   * Flag eligibility for **end-of-year Additional Assessment**.
+6. **eoy-final**: After all exams and supplementary exams are completed. Progression codes must be definitive; `FECP` is only used if grades are genuinely unresolved.
+
+### B. Additional Assessment (AA) Eligibility Rules:
+The Faculty of Engineering & the Built Environment (EBE) allows a student to write an Additional Assessment (Supplementary Exam) if they are **exactly one course short of graduating**.
+
+An advisor must apply these rules to check for AA eligibility:
+1. **Graduation Proximity**: The student's total credits passed plus the credits of the single outstanding course must meet the curriculum minimum (`totalcr + outstanding_course_credits >= rcurcr`).
+2. **Exactly One Missing Course**:
+   * **EOY Check (Stage 5/6)**: The student does not currently qualify, but they have failed exactly one academic course (excluding 0-credit practical training courses `EEE1000X` and `EEE3000X`). If simulating a pass for this single course results in graduation, they are eligible.
+   * **Mid-Year Check (Stage 3)**: Under the "Pass All S2" (`PY`) simulation (assuming they pass all second-semester courses), they are left with exactly one failed first-semester course that prevents graduation. If so, they are eligible for S1 Additional Assessment.
+3. **POTA/POTS/QUAL Exclusion**: Students who are already qualified (`QUAL`) under current results (or predicted to graduate under simulated results) do not need AA and must be marked as `No`.
+
+---
+
 ## APPENDIX A: COURSE PREREQUISITES MAPPING
 To register for the course on the left, the student must have passed all courses on the right. If courses are grouped in brackets `[A or B]`, at least one course in the bracket must be passed:
 

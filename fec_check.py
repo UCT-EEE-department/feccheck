@@ -14,11 +14,12 @@ InputType = Union[str, List[StudentInfo]]
 EEE_PROGS = {'EB009', 'EB809', 'EB011', 'EB811', 'EB022', 'EB822'}
 
 class FECCheck:
-    def __init__(self, data_or_fname: InputType, ufname: Optional[str] = None):
+    def __init__(self, data_or_fname: InputType, ufname: Optional[str] = None, phase: str = 'eoy-exam'):
         """
         FECCHECK: Construct FEC check object.
         Initializes the programme definitions and filters student records.
         """
+        self.phase = phase
         self.pdefs: Dict[str, Any] = {}
         stinfo: List[Dict[str, Any]] = []
 
@@ -80,6 +81,7 @@ class FECCheck:
 
         # Generaate output xlsx sheet
         self.writenotes(ofname)
+        self.writesummarytable(self.stinfo, ofname, 'Summary')
         self.writeprogtable(self.stinfo, 'pcs_curr', ofname, 'Curr')
         self.writeprogtable(self.stinfo, 'pcs_pY', ofname, 'PY')
         self.writeprogtable(self.stinfo, 'pcs_pS2', ofname, 'PS2')
@@ -1049,8 +1051,94 @@ class FECCheck:
         
         nfcy = pip_failed.sum()
         cfcy = ','.join(srec_df[pip_failed]['course'].tolist())
+
+        # Determine phase_code and phase_message
+        phase_code = pc
+        phase_message = pmess
         
-        # Return
+        aa_eligible = "No"
+        aa_course = ""
+        
+        # Check Additional Assessment eligibility
+        if self.phase == 'midyear-exam':
+            if pcsp['pc'] != 'QUAL':
+                has_aa, aa_c = self.check_additional_assessment(strecp, simulated=True)
+                if has_aa:
+                    aa_eligible = "Yes (S1)"
+                    aa_course = aa_c
+        elif self.phase in ['eoy-exam', 'eoy-final']:
+            if pcs['pc'] != 'QUAL':
+                has_aa, aa_c = self.check_additional_assessment(strec)
+                if has_aa:
+                    aa_eligible = "Yes"
+                    aa_course = aa_c
+                
+        # Phase Decision Logic
+        if self.phase == 'snapshot':
+            phase_code = pcs['pc']
+            phase_message = pcs['pmess']
+            
+        elif self.phase == 'cleanup':
+            if pcsp['pc'] == 'QUAL':
+                # Check if registered for any S (second semester) or W (whole year) courses in the current year
+                registered_this_year = srec_df[srec_df['yt'] == cyear]
+                has_s2_courses = registered_this_year['course'].str.endswith(('S', 'W')).any()
+                if has_s2_courses:
+                    phase_code = 'POTA'
+                    phase_message = f"Potential April Qualifier ({pcsp['hons']})" if pcsp['hons'] else "Potential April Qualifier"
+                else:
+                    phase_code = 'POTS'
+                    phase_message = f"Potential September Qualifier ({pcsp['hons']})" if pcsp['hons'] else "Potential September Qualifier"
+            elif pcsp['pc'] in ['RENN', 'FECR']:
+                phase_code = pcsp['pc']
+                phase_message = f"Registration Risk: will exclude ({pcsp['pmess']})"
+            else:
+                phase_code = 'CONT'
+                phase_message = "Normal Progression"
+                
+        elif self.phase == 'midyear-exam':
+            if pcs['pc'] == 'QUAL':
+                phase_code = 'QUAL'
+                phase_message = pcs['pmess']
+            elif pcs['pc'] != pcsp['pc'] and pcsp['pc'] == 'QUAL':
+                phase_code = 'QUAS'
+                phase_message = "Qualify Assumed (S1 Supps/DE)"
+            else:
+                phase_code = pcs['pc']
+                phase_message = pcs['pmess']
+                
+        elif self.phase == 'midyear-supp':
+            phase_code = pcs['pc']
+            phase_message = pcs['pmess']
+            
+        elif self.phase == 'eoy-exam':
+            if pcs['pc'] == 'QUAL':
+                phase_code = 'QUAL'
+                phase_message = pcs['pmess']
+            elif pcs['pc'] != pcsp['pc'] and pcsp['pc'] == 'QUAL':
+                phase_code = 'QUAS'
+                phase_message = "Qualify Assumed"
+            elif pcs['pc'] == 'RENN' and pcsp['pc'] == 'CONT':
+                phase_code = 'SUPP'
+                phase_message = f"RENN ({pcs['pmess']}) OR CONT ({pcsp['pmess']})"
+            elif pcs['pc'] == 'FECR' and pcsp['pc'] == 'CONT':
+                phase_code = 'FECP'
+                phase_message = f"FECR ({pcs['pmess']}) OR CONT ({pcsp['pmess']})"
+            elif pcs['pc'] == 'RENN' and pcsp['pc'] == 'FECR':
+                phase_code = 'FECP'
+                phase_message = f"RENN ({pcs['pmess']}) OR FECR ({pcsp['pmess']})"
+            else:
+                phase_code = pcs['pc']
+                phase_message = pcs['pmess']
+                
+        elif self.phase == 'eoy-final':
+            if pcs['pc'] != pcsp['pc']:
+                phase_code = 'FECP'
+                phase_message = f"FEC Pending: {pcs['pc']} vs {pcsp['pc']}"
+            else:
+                phase_code = pcs['pc']
+                phase_message = pcs['pmess']
+        
         pcres = {
             'pc': pc,
             'pmess': pmess,
@@ -1060,9 +1148,112 @@ class FECCheck:
             'nfcy': int(nfcy),
             'cfcy': cfcy,
             'pcs': pcs,
-            'pcsp': pcsp
+            'pcsp': pcsp,
+            'phase_code': phase_code,
+            'phase_message': phase_message,
+            'aa_eligible': aa_eligible,
+            'aa_course': aa_course
         }
         return pcres
+
+    def check_additional_assessment(self, strec: Dict[str, Any], simulated: bool = False) -> Tuple[bool, Optional[str]]:
+        """
+        Check if student is eligible for Additional Assessment (AA) / last-course supplementary.
+        Eligible if they did NOT qualify under current results, but simulating a pass
+        for exactly one failed course in their transcript allows them to qualify.
+        """
+        srec_df = strec['srec']
+        
+        # 1. Determine passed courses
+        srecr = srec_df['perc'].astype(str)
+        pip50 = pd.to_numeric(srecr, errors='coerce') >= 50
+        pipPA = srecr == 'PA'
+        pipUP = srecr == 'UP'
+        pipCon = srecr == '50C'
+        pip_passed = pip50 | pipPA | pipUP | pipCon
+        
+        # 2. Treat practical training EEE1000X and EEE3000X as passed for AA check
+        is_prac = srec_df['course'].isin(['EEE1000X', 'EEE3000X'])
+        
+        # 3. Failed courses (excluding practical training)
+        failed_mask = ~pip_passed & ~is_prac
+        
+        # S1 check filter (if simulated midyear): only consider courses ending in F, H, C, Z
+        if simulated:
+            failed_mask &= srec_df['course'].str.endswith(('F', 'H', 'C', 'Z', 'X'))
+            
+        failed_courses = srec_df[failed_mask]['course'].unique().tolist()
+        
+        candidates = []
+        for course in failed_courses:
+            # Create a copy and simulate passing this course
+            srec_copy = srec_df.copy()
+            idx = srec_copy['course'] == course
+            srec_copy.loc[idx, 'perc'] = '50'
+            srec_copy.loc[idx, 'symbol'] = 'PA'
+            srec_copy.loc[idx, 'cre'] = srec_copy.loc[idx, 'crt']
+            
+            # Treat practical training as passed
+            srec_copy.loc[is_prac, 'perc'] = 'PA'
+            srec_copy.loc[is_prac, 'symbol'] = 'PA'
+            srec_copy.loc[is_prac, 'cre'] = srec_copy.loc[is_prac, 'crt']
+            
+            strec_copy = {
+                'sinfo': strec['sinfo'],
+                'ystats': strec['ystats'],
+                'srec': srec_copy
+            }
+            
+            qres_copy = self.getqualinfo(strec_copy)
+            qualf, _ = self.isqual(qres_copy)
+            if qualf:
+                candidates.append(course)
+                
+        if len(candidates) == 1:
+            return True, candidates[0]
+        return False, None
+
+    def writesummarytable(self, stinfo: List[Dict[str, Any]], fname: str, shname: str) -> None:
+        """Write central FEC summary sheet with phase progression codes and AA flags."""
+        output_data = []
+        for strec in stinfo:
+            pcres = strec.get('pcres')
+            if pcres is None: continue
+            
+            pcs = pcres['pcs']
+            pcsp = pcres['pcsp']
+            
+            output_data.append({
+                'campusid': strec['sinfo'][1],
+                'name': strec['sinfo'][0],
+                'acadprog': strec['sinfo'][3],
+                'phase_code': pcres['phase_code'],
+                'phase_message': pcres['phase_message'],
+                'cur_code': pcs['pc'],
+                'best_code': pcsp['pc'],
+                'aa_eligible': pcres['aa_eligible'],
+                'aa_course': pcres['aa_course'],
+                'missing_core': ','.join(pcres['cmissing']),
+                'outstanding_supps': ','.join(pcres['suppdes']),
+                'comments': pcs.get('comments', '')
+            })
+            
+        otab = pd.DataFrame(output_data)
+        
+        try:
+            with pd.ExcelWriter(fname, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+                otab.to_excel(writer, sheet_name=shname, index=False)
+                worksheet = writer.sheets[shname]
+                
+                # Autofit column widths
+                for col in worksheet.columns:
+                    max_len = max(len(str(cell.value or '')) for cell in col)
+                    col_letter = get_column_letter(col[0].column)
+                    worksheet.column_dimensions[col_letter].width = max(max_len + 2, 10)
+                    
+            print(f"Summary table written to {fname}.")
+        except Exception as e:
+            print(f"Failed to write summary table to Excel: {e}")
 
     def gentcert(self, strec: Dict[str, Any]) -> pd.DataFrame:
         """Determines if core degree requirements have been completed (Certificate)."""
