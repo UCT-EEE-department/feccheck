@@ -1052,92 +1052,81 @@ class FECCheck:
         nfcy = pip_failed.sum()
         cfcy = ','.join(srec_df[pip_failed]['course'].tolist())
 
-        # Determine phase_code and phase_message
-        phase_code = pc
-        phase_message = pmess
+        # --- Stage 1: Snapshot ---
+        cur_code = pcs['pc']
+        cur_message = pcs['pmess']
         
-        aa_eligible = "No"
-        aa_course = ""
+        # --- Stage 2: Cleanup ---
+        cleanup_code = 'CONT'
+        cleanup_message = "Normal Progression"
+        if pcsp['pc'] == 'QUAL':
+            registered_this_year = srec_df[srec_df['yt'] == cyear]
+            has_s2_courses = registered_this_year['course'].str.endswith(('S', 'W')).any()
+            if has_s2_courses:
+                cleanup_code = 'POTA'
+                cleanup_message = f"Potential April Qualifier ({pcsp['hons']})" if pcsp['hons'] else "Potential April Qualifier"
+            else:
+                cleanup_code = 'POTS'
+                cleanup_message = f"Potential September Qualifier ({pcsp['hons']})" if pcsp['hons'] else "Potential September Qualifier"
+        elif pcsp['pc'] in ['RENN', 'FECR']:
+            cleanup_code = pcsp['pc']
+            cleanup_message = f"Registration Risk: will exclude ({pcsp['pmess']})"
+            
+        # --- Stage 3: Mid-Year Exam ---
+        midyear_exam_code = pcs['pc']
+        midyear_exam_message = pcs['pmess']
+        if pcs['pc'] == 'QUAL':
+            midyear_exam_code = 'QUAL'
+            midyear_exam_message = pcs['pmess']
+        elif pcs['pc'] != pcsp['pc'] and pcsp['pc'] == 'QUAL':
+            midyear_exam_code = 'QUAS'
+            midyear_exam_message = "Qualify Assumed (S1 Supps/DE)"
+            
+        # --- Stage 4: Mid-Year Supp ---
+        midyear_supp_code = pcs['pc']
+        midyear_supp_message = pcs['pmess']
         
-        # Check Additional Assessment eligibility
-        if self.phase == 'midyear-exam':
-            if pcsp['pc'] != 'QUAL':
-                has_aa, aa_c = self.check_additional_assessment(strecp, simulated=True)
-                if has_aa:
-                    aa_eligible = "Yes (S1)"
-                    aa_course = aa_c
-        elif self.phase in ['eoy-exam', 'eoy-final']:
-            if pcs['pc'] != 'QUAL':
-                has_aa, aa_c = self.check_additional_assessment(strec)
-                if has_aa:
-                    aa_eligible = "Yes"
-                    aa_course = aa_c
-                
-        # Phase Decision Logic
-        if self.phase == 'snapshot':
-            phase_code = pcs['pc']
-            phase_message = pcs['pmess']
+        # --- Stage 5: EOY Exam ---
+        eoy_exam_code = pcs['pc']
+        eoy_exam_message = pcs['pmess']
+        if pcs['pc'] == 'QUAL':
+            eoy_exam_code = 'QUAL'
+            eoy_exam_message = pcs['pmess']
+        elif pcs['pc'] != pcsp['pc'] and pcsp['pc'] == 'QUAL':
+            eoy_exam_code = 'QUAS'
+            eoy_exam_message = "Qualify Assumed"
+        elif pcs['pc'] == 'RENN' and pcsp['pc'] == 'CONT':
+            eoy_exam_code = 'SUPP'
+            eoy_exam_message = f"RENN ({pcs['pmess']}) OR CONT ({pcsp['pmess']})"
+        elif pcs['pc'] == 'FECR' and pcsp['pc'] == 'CONT':
+            eoy_exam_code = 'FECP'
+            eoy_exam_message = f"FECR ({pcs['pmess']}) OR CONT ({pcsp['pmess']})"
+        elif pcs['pc'] == 'RENN' and pcsp['pc'] == 'FECR':
+            eoy_exam_code = 'FECP'
+            eoy_exam_message = f"RENN ({pcs['pmess']}) OR FECR ({pcsp['pmess']})"
             
-        elif self.phase == 'cleanup':
-            if pcsp['pc'] == 'QUAL':
-                # Check if registered for any S (second semester) or W (whole year) courses in the current year
-                registered_this_year = srec_df[srec_df['yt'] == cyear]
-                has_s2_courses = registered_this_year['course'].str.endswith(('S', 'W')).any()
-                if has_s2_courses:
-                    phase_code = 'POTA'
-                    phase_message = f"Potential April Qualifier ({pcsp['hons']})" if pcsp['hons'] else "Potential April Qualifier"
-                else:
-                    phase_code = 'POTS'
-                    phase_message = f"Potential September Qualifier ({pcsp['hons']})" if pcsp['hons'] else "Potential September Qualifier"
-            elif pcsp['pc'] in ['RENN', 'FECR']:
-                phase_code = pcsp['pc']
-                phase_message = f"Registration Risk: will exclude ({pcsp['pmess']})"
-            else:
-                phase_code = 'CONT'
-                phase_message = "Normal Progression"
+        # --- Stage 6: EOY Final ---
+        eoy_final_code = pcs['pc']
+        eoy_final_message = pcs['pmess']
+        if pcs['pc'] != pcsp['pc']:
+            eoy_final_code = 'FECP'
+            eoy_final_message = f"FEC Pending: {pcs['pc']} vs {pcsp['pc']}"
+
+        # --- Additional Assessment ---
+        midyear_aa_course = ""
+        eoy_aa_course = ""
+        
+        # S1 Check: Check S1 failed courses in simulated PY record if PY record does not qualify yet
+        if pcsp['pc'] != 'QUAL':
+            has_aa, aa_c = self.check_additional_assessment(strecp, simulated=True)
+            if has_aa:
+                midyear_aa_course = aa_c
                 
-        elif self.phase == 'midyear-exam':
-            if pcs['pc'] == 'QUAL':
-                phase_code = 'QUAL'
-                phase_message = pcs['pmess']
-            elif pcs['pc'] != pcsp['pc'] and pcsp['pc'] == 'QUAL':
-                phase_code = 'QUAS'
-                phase_message = "Qualify Assumed (S1 Supps/DE)"
-            else:
-                phase_code = pcs['pc']
-                phase_message = pcs['pmess']
-                
-        elif self.phase == 'midyear-supp':
-            phase_code = pcs['pc']
-            phase_message = pcs['pmess']
-            
-        elif self.phase == 'eoy-exam':
-            if pcs['pc'] == 'QUAL':
-                phase_code = 'QUAL'
-                phase_message = pcs['pmess']
-            elif pcs['pc'] != pcsp['pc'] and pcsp['pc'] == 'QUAL':
-                phase_code = 'QUAS'
-                phase_message = "Qualify Assumed"
-            elif pcs['pc'] == 'RENN' and pcsp['pc'] == 'CONT':
-                phase_code = 'SUPP'
-                phase_message = f"RENN ({pcs['pmess']}) OR CONT ({pcsp['pmess']})"
-            elif pcs['pc'] == 'FECR' and pcsp['pc'] == 'CONT':
-                phase_code = 'FECP'
-                phase_message = f"FECR ({pcs['pmess']}) OR CONT ({pcsp['pmess']})"
-            elif pcs['pc'] == 'RENN' and pcsp['pc'] == 'FECR':
-                phase_code = 'FECP'
-                phase_message = f"RENN ({pcs['pmess']}) OR FECR ({pcsp['pmess']})"
-            else:
-                phase_code = pcs['pc']
-                phase_message = pcs['pmess']
-                
-        elif self.phase == 'eoy-final':
-            if pcs['pc'] != pcsp['pc']:
-                phase_code = 'FECP'
-                phase_message = f"FEC Pending: {pcs['pc']} vs {pcsp['pc']}"
-            else:
-                phase_code = pcs['pc']
-                phase_message = pcs['pmess']
+        # EOY Check: Check failed courses in actual record if actual record does not qualify yet
+        if pcs['pc'] != 'QUAL':
+            has_aa, aa_c = self.check_additional_assessment(strec)
+            if has_aa:
+                eoy_aa_course = aa_c
         
         pcres = {
             'pc': pc,
@@ -1149,10 +1138,20 @@ class FECCheck:
             'cfcy': cfcy,
             'pcs': pcs,
             'pcsp': pcsp,
-            'phase_code': phase_code,
-            'phase_message': phase_message,
-            'aa_eligible': aa_eligible,
-            'aa_course': aa_course
+            'cur_code': cur_code,
+            'cur_message': cur_message,
+            'cleanup_code': cleanup_code,
+            'cleanup_message': cleanup_message,
+            'midyear_exam_code': midyear_exam_code,
+            'midyear_exam_message': midyear_exam_message,
+            'midyear_supp_code': midyear_supp_code,
+            'midyear_supp_message': midyear_supp_message,
+            'eoy_exam_code': eoy_exam_code,
+            'eoy_exam_message': eoy_exam_message,
+            'eoy_final_code': eoy_final_code,
+            'eoy_final_message': eoy_final_message,
+            'midyear_aa_course': midyear_aa_course,
+            'eoy_aa_course': eoy_aa_course
         }
         return pcres
 
@@ -1186,6 +1185,15 @@ class FECCheck:
         
         candidates = []
         for course in failed_courses:
+            # --- Additional Assessment Exclusions ---
+            # Rule 1: We do not grant AA for EEE4022 (capstone project)
+            if 'EEE4022' in course:
+                continue
+            # Rule 2: We do not grant AA for courses that do not have exams (C, X, L, Z suffixes)
+            suffix = course[-1]
+            if suffix in ['C', 'X', 'L', 'Z']:
+                continue
+                
             # Create a copy and simulate passing this course
             srec_copy = srec_df.copy()
             idx = srec_copy['course'] == course
@@ -1221,18 +1229,33 @@ class FECCheck:
             if pcres is None: continue
             
             pcs = pcres['pcs']
-            pcsp = pcres['pcsp']
             
             output_data.append({
                 'campusid': strec['sinfo'][1],
                 'name': strec['sinfo'][0],
                 'acadprog': strec['sinfo'][3],
-                'phase_code': pcres['phase_code'],
-                'phase_message': pcres['phase_message'],
-                'cur_code': pcs['pc'],
-                'best_code': pcsp['pc'],
-                'aa_eligible': pcres['aa_eligible'],
-                'aa_course': pcres['aa_course'],
+                # Stage 1: Snapshot
+                'cur_code': pcres['cur_code'],
+                'cur_message': pcres['cur_message'],
+                # Stage 2: Cleanup
+                'cleanup_code': pcres['cleanup_code'],
+                'cleanup_message': pcres['cleanup_message'],
+                # Stage 3: Mid-Year Exam
+                'midyear_exam_code': pcres['midyear_exam_code'],
+                'midyear_exam_message': pcres['midyear_exam_message'],
+                # Stage 4: Mid-Year Supp
+                'midyear_supp_code': pcres['midyear_supp_code'],
+                'midyear_supp_message': pcres['midyear_supp_message'],
+                # Stage 5: EOY Exam
+                'eoy_exam_code': pcres['eoy_exam_code'],
+                'eoy_exam_message': pcres['eoy_exam_message'],
+                # Stage 6: EOY Final
+                'eoy_final_code': pcres['eoy_final_code'],
+                'eoy_final_message': pcres['eoy_final_message'],
+                # Additional Assessment
+                'midyear_aa_course': pcres['midyear_aa_course'],
+                'eoy_aa_course': pcres['eoy_aa_course'],
+                # Missing core & comments
                 'missing_core': ','.join(pcres['cmissing']),
                 'outstanding_supps': ','.join(pcres['suppdes']),
                 'comments': pcs.get('comments', '')
