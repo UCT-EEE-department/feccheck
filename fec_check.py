@@ -1117,8 +1117,12 @@ class FECCheck:
         eoy_aa_course = ""
         
         # S1 Check: Check S1 failed courses in simulated PY record if PY record does not qualify yet
-        if pcsp['pc'] != 'QUAL':
-            has_aa, aa_c = self.check_additional_assessment(strecp, simulated=True)
+        # S1 Check: Check S1 failed courses in simulated PS2 record if PS2 record does not qualify yet
+        # (meaning if they pass all S2 courses, they would graduate except for one failed S1 course)
+        strec_pS2 = self.flagsem2passed(strec)
+        pc_pS2 = self.getprogressioninfo(strec_pS2)
+        if pc_pS2['pc'] != 'QUAL':
+            has_aa, aa_c = self.check_additional_assessment(strec_pS2, simulated=True)
             if has_aa:
                 midyear_aa_course = aa_c
                 
@@ -1168,6 +1172,7 @@ class FECCheck:
         for exactly one failed course in their transcript allows them to qualify.
         """
         srec_df = strec['srec']
+        cyear = strec['ystats']['yr'].max()
         
         # 1. Determine passed courses
         srecr = srec_df['perc'].astype(str)
@@ -1180,14 +1185,74 @@ class FECCheck:
         # 2. Treat practical training EEE1000X and EEE3000X as passed for AA check
         is_prac = srec_df['course'].isin(['EEE1000X', 'EEE3000X'])
         
-        # 3. Failed courses (excluding practical training)
-        failed_mask = ~pip_passed & ~is_prac
+        # 3. Check baseline: does student qualify if we only treat practical training as passed?
+        srec_baseline = srec_df.copy()
+        srec_baseline.loc[is_prac, 'perc'] = 'PA'
+        srec_baseline.loc[is_prac, 'symbol'] = 'PA'
+        srec_baseline.loc[is_prac, 'cre'] = srec_baseline.loc[is_prac, 'crt']
+        
+        strec_baseline = {
+            'sinfo': strec['sinfo'],
+            'ystats': strec['ystats'],
+            'srec': srec_baseline
+        }
+        
+        qres_baseline = self.getqualinfo(strec_baseline)
+        baseline_qualf, _ = self.isqual(qres_baseline)
+        if baseline_qualf:
+            # Student already qualifies (or only lacks practical training), no AA needed
+            return False, None
+
+        # 4. Determine in-progress courses (blank marks and symbols)
+        srecr_clean = srec_df['perc'].astype(str).str.strip()
+        symbolr_clean = srec_df['symbol'].astype(str).str.strip()
+        
+        is_perc_blank = (srecr_clean == '') | (srecr_clean == 'nan') | (srecr_clean == '<NA>') | (srec_df['perc'].isna())
+        is_sym_blank = (symbolr_clean == '') | (symbolr_clean == 'nan') | (symbolr_clean == '<NA>') | (srec_df['symbol'].isna())
+        is_in_progress = is_perc_blank & is_sym_blank
+        
+        # 5. Failed mask: not passed, not practical, and not in progress
+        failed_mask = ~pip_passed & ~is_prac & ~is_in_progress
         
         # S1 check filter (if simulated midyear): only consider courses ending in F, H, C, Z
         if simulated:
             failed_mask &= srec_df['course'].str.endswith(('F', 'H', 'C', 'Z', 'X'))
             
-        failed_courses = srec_df[failed_mask]['course'].unique().tolist()
+        failed_courses_raw = srec_df[failed_mask]['course'].unique().tolist()
+        
+        # Get courses that are currently in progress or already passed (directly or via equivalents)
+        in_progress_courses = srec_df[is_in_progress]['course'].unique().tolist()
+        passed_courses = srec_df[pip_passed]['course'].unique().tolist()
+        
+        # Helper to get all equivalent course codes
+        def get_equivalent_courses(course_code):
+            equiv_courses = {course_code}
+            for equiv_list in self.pdefs['cequivs']:
+                flat_equiv = []
+                for item in equiv_list:
+                    if isinstance(item, list):
+                        flat_equiv.extend(item)
+                    else:
+                        flat_equiv.append(item)
+                if course_code in flat_equiv:
+                    equiv_courses.update(flat_equiv)
+            return equiv_courses
+            
+        # Helper to check if a course or any of its equivalents is passed
+        def is_course_or_equiv_passed(course_code):
+            equivs = get_equivalent_courses(course_code)
+            return any(c in passed_courses for c in equivs)
+            
+        # Exclude any course that is currently in progress or has been passed/satisfied
+        failed_courses = [c for c in failed_courses_raw if c not in in_progress_courses and not is_course_or_equiv_passed(c)]
+        
+        # 5. Get currently awarded supps/DE exams in current year
+        pipS = srecr.str.contains(r'[0-9].*S', regex=True, na=False)
+        pipOSS = srecr.str.contains('OSS', regex=False, na=False)
+        pipDE = srecr == 'DE'
+        pipOS = srecr == 'OS'
+        pip_supp = (srec_df['yt'] == cyear) & (pipS | pipOSS | pipDE | pipOS)
+        awarded_supps = srec_df[pip_supp]['course'].unique().tolist()
         
         candidates = []
         for course in failed_courses:
@@ -1198,6 +1263,9 @@ class FECCheck:
             # Rule 2: We do not grant AA for courses that do not have exams (C, X, L, Z suffixes)
             suffix = course[-1]
             if suffix in ['C', 'X', 'L', 'Z']:
+                continue
+            # Rule 3: We do not grant AA for a course if they already have an awarded supp for it
+            if course in awarded_supps:
                 continue
                 
             # Create a copy and simulate passing this course
