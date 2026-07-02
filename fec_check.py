@@ -1127,6 +1127,13 @@ class FECCheck:
             has_aa, aa_c = self.check_additional_assessment(strec)
             if has_aa:
                 eoy_aa_course = aa_c
+
+        # Combine Additional Assessment courses into a single field
+        aa_course = ""
+        if eoy_aa_course:
+            aa_course = eoy_aa_course
+        elif midyear_aa_course:
+            aa_course = f"{midyear_aa_course} (S1)"
         
         pcres = {
             'pc': pc,
@@ -1150,8 +1157,7 @@ class FECCheck:
             'eoy_exam_message': eoy_exam_message,
             'eoy_final_code': eoy_final_code,
             'eoy_final_message': eoy_final_message,
-            'midyear_aa_course': midyear_aa_course,
-            'eoy_aa_course': eoy_aa_course
+            'aa_course': aa_course
         }
         return pcres
 
@@ -1253,8 +1259,7 @@ class FECCheck:
                 'eoy_final_code': pcres['eoy_final_code'],
                 'eoy_final_message': pcres['eoy_final_message'],
                 # Additional Assessment
-                'midyear_aa_course': pcres['midyear_aa_course'],
-                'eoy_aa_course': pcres['eoy_aa_course'],
+                'aa_course': pcres['aa_course'],
                 # Missing core & comments
                 'missing_core': ','.join(pcres['cmissing']),
                 'outstanding_supps': ','.join(pcres['suppdes']),
@@ -1285,8 +1290,7 @@ class FECCheck:
                     'eoy_exam_message': "Explanatory message for Stage 5 EOY exam standing.",
                     'eoy_final_code': "Stage 6 (End-of-Year Final): Definitive progression standing after all regular and supplementary/deferred exams are completed.",
                     'eoy_final_message': "Explanatory message for Stage 6 EOY final standing.",
-                    'midyear_aa_course': "First-semester course for which the student is eligible for a Mid-Year Additional Assessment (Supplementary) because they are exactly one course short of graduation in the S1 simulation. (Excludes capstones and non-exam courses).",
-                    'eoy_aa_course': "Course for which the student is eligible for an End-of-Year Additional Assessment (Supplementary) because they are exactly one course short of graduation. (Excludes capstones and non-exam courses).",
+                    'aa_course': "Course for which the student is eligible for an Additional Assessment (Supplementary). Suffix '(S1)' indicates a first-semester course eligibility predicted during mid-year simulation. (Excludes capstones and non-exam courses).",
                     'missing_core': "List of outstanding core courses from the student's curriculum specification.",
                     'outstanding_supps': "List of outstanding supplementary or deferred exams currently on the student's record.",
                     'comments': "Curriculum specification applied and a trace of all across-variant course equivalencies matched."
