@@ -438,9 +438,12 @@ The Faculty of Engineering & the Built Environment (EBE) allows a student to wri
 An advisor must apply these rules to check for AA eligibility:
 1. **Graduation Proximity**: The student's total credits passed plus the credits of the single outstanding course must meet the curriculum minimum (`totalcr + outstanding_course_credits >= rcurcr`).
 2. **Exactly One Missing Course**:
-   * **EOY Check (Stage 5/6)**: The student does not currently qualify, but they have failed exactly one academic course (excluding 0-credit practical training courses `EEE1000X` and `EEE3000X`). If simulating a pass for this single course results in graduation, they are eligible.
+   * **EOY Check (Stage 5/6)**: The student does not currently qualify, but they have failed exactly one academic course. If simulating a pass for this single course results in graduation, they are eligible.
    * **Mid-Year Check (Stage 3)**: Under the "Pass All S2" (`PY`) simulation (assuming they pass all second-semester courses), they are left with exactly one failed first-semester course that prevents graduation. If so, they are eligible for S1 Additional Assessment.
-3. **POTA/POTS/QUAL Exclusion**: Students who are already qualified (`QUAL`) under current results (or predicted to graduate under simulated results) do not need AA and must be marked as `No`.
+3. **Excluded Courses**:
+   * **Capstone Project (`EEE4022F`/`EEE4022S`)**: Never eligible for Additional Assessment.
+   * **Non-Exam Courses**: Suffixes `'C'`, `'X'`, `'L'`, `'Z'` (representing practical training, block courses, field work, or laboratories) do not have written exams and are never eligible for Additional Assessment.
+4. **POTA/POTS/QUAL Exclusion**: Students who are already qualified (`QUAL`) under current results (or predicted to graduate under simulated results) do not need AA and must be marked as `No`.
 
 ---
 
