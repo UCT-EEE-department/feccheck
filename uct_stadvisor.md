@@ -443,7 +443,7 @@ An advisor must apply these rules to check for AA eligibility:
 3. **AA Exclusions**:
    * **Capstone Project (`EEE4022F`/`EEE4022S`)**: Never eligible for Additional Assessment.
    * **Non-Exam Courses**: Suffixes `'C'`, `'X'`, `'L'`, `'Z'` (representing practical training, block courses, field work, or laboratories) do not have written exams and are never eligible for Additional Assessment.
-   * **Already Awarded Supp**: If a student has already been awarded a supplementary or deferred exam for that course in the current year (mark ends in `S`, or symbol is `FS`, `OSS`, `DE`, `OS`), they cannot be awarded Additional Assessment for it.
+   * **Already Awarded Supp / DP Refused**: If a student has already been awarded a supplementary or deferred exam for that course in the current year (mark ends in `S`, or symbol is `FS`, `OSS`, `DE`, `OS`), or if they were refused DP (`DPR`) for that course, they cannot be awarded Additional Assessment for it.
    * **Historically Passed / Satisfied via Equivalents**: If a student has already passed the course historically, or passed an equivalent course (e.g. `PHY1014S` satisfying `PHY1012F`), the course is not considered failed.
 4. **Already Qualifying / Practical Training Exclusion**: Students who are already qualified (`QUAL`) under actual or simulated results, or who only lack 0-credit practical training courses `EEE1000X`/`EEE3000X` (`QUAS`), do not need AA and must be marked as `No`.
 

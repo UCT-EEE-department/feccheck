@@ -1283,6 +1283,10 @@ class FECCheck:
             # Rule 3: We do not grant AA for a course if they already have an awarded supp for it
             if course in awarded_supps:
                 continue
+            # Rule 4: We do not grant AA for a course if the student got DP Refused (DPR) for it in the current year
+            has_dpr = not srec_df[(srec_df['course'] == course) & (srec_df['yt'] == cyear) & (srec_df['symbol'] == 'DPR')].empty
+            if has_dpr:
+                continue
                 
             # Create a copy and simulate passing this course
             srec_copy = srec_df.copy()
