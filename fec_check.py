@@ -1268,6 +1268,36 @@ class FECCheck:
                 otab.to_excel(writer, sheet_name=shname, index=False)
                 worksheet = writer.sheets[shname]
                 
+                # Define column comments to explain what they mean and how they are used
+                header_comments = {
+                    'campusid': "Student's unique UCT campus ID (e.g. ABCXYZ001).",
+                    'name': "Student's full name.",
+                    'acadprog': "Academic Program code (e.g. EB009, EB011, EB022, EB809).",
+                    'cur_code': "Stage 1 (Snapshot): Actual current progression code based on current worst-case marks.",
+                    'cur_message': "Explanatory message / academic exclusion rules triggered under the current worst-case snapshot.",
+                    'cleanup_code': "Stage 2 (Registration Cleanup): Indicates if student is expected to graduate (POTA/POTS) or if their registration will lead to academic exclusion even if they pass everything.",
+                    'cleanup_message': "Notes/Warnings for Stage 2 registration cleanup (e.g., Potential September/April Qualifier, or registration risk).",
+                    'midyear_exam_code': "Stage 3 (Mid-Year Exams): Progression code after S1 exams. Shows early QUAL or QUAS (Qualify Assumed pending S1 supps).",
+                    'midyear_exam_message': "Explanatory message for Stage 3 mid-year exam standing.",
+                    'midyear_supp_code': "Stage 4 (Mid-Year Supps): Progression code after S1 supplementaries/deferreds are resolved.",
+                    'midyear_supp_message': "Explanatory message for Stage 4 mid-year supp standing.",
+                    'eoy_exam_code': "Stage 5 (End-of-Year Exams): Progression code after S2 regular exams. Shows QUAL, QUAS (assumes supps passed), SUPP (alert to prepare RAC appeal), or FECP (borderline).",
+                    'eoy_exam_message': "Explanatory message for Stage 5 EOY exam standing.",
+                    'eoy_final_code': "Stage 6 (End-of-Year Final): Definitive progression standing after all regular and supplementary/deferred exams are completed.",
+                    'eoy_final_message': "Explanatory message for Stage 6 EOY final standing.",
+                    'midyear_aa_course': "First-semester course for which the student is eligible for a Mid-Year Additional Assessment (Supplementary) because they are exactly one course short of graduation in the S1 simulation. (Excludes capstones and non-exam courses).",
+                    'eoy_aa_course': "Course for which the student is eligible for an End-of-Year Additional Assessment (Supplementary) because they are exactly one course short of graduation. (Excludes capstones and non-exam courses).",
+                    'missing_core': "List of outstanding core courses from the student's curriculum specification.",
+                    'outstanding_supps': "List of outstanding supplementary or deferred exams currently on the student's record.",
+                    'comments': "Curriculum specification applied and a trace of all across-variant course equivalencies matched."
+                }
+                
+                # Apply comments to header cells
+                for col_idx, col_name in enumerate(otab.columns, start=1):
+                    if col_name in header_comments:
+                        cell = worksheet.cell(row=1, column=col_idx)
+                        cell.comment = Comment(text=header_comments[col_name], author="FECCheck")
+                
                 # Autofit column widths
                 for col in worksheet.columns:
                     max_len = max(len(str(cell.value or '')) for cell in col)
