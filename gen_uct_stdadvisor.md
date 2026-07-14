@@ -12,6 +12,8 @@ Read the current versions of the following source files to extract the source-of
    - Extract the complete list of course equivalencies (`COURSE_EQUIVALENCIES`), noting that some course rules involve combinations of multiple courses (e.g. nested lists/tuples).
 2. **[fec_check.py](fec_check.py)**:
    - Inspect the progression checking logic (`FECCheck` class methods such as `getqualinfo`, `isqual`, `getprogressioninfo`, `genfecdecision`, `gentcert`, `aspectstudent`, and `getnumstrikes`).
+   - Confirm interpretation of CRS result symbols, especially handling of `FS` (failed with supplementary exam pending) and `SF` (supplementary exam failed).
+   - Verify that progression assessment is based solely on credits passed in the current year (and historically over the two‑year window where applicable), with no rule limiting the number of times a course can be failed.
    - Confirm current credit limits for graduation:
      - 560 credits if first EEE department registration >= 2025.
      - 576 credits if first EEE department registration < 2025.

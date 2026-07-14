@@ -145,10 +145,12 @@ A requirement (left side) is satisfied if the student has passed that course OR 
 * **MEC2047F** ➔ `MEC2023F` OR `MEC2023S` OR `MEC2047S`
 * **EEE4022S** ➔ `EEE4022F`
 * **MEC4022Z** ➔ `MEC4044Z` OR `MEC4054Z`
-* **MEC3035S** ➔ `MEC3035F`
-* **MEC4063C** ➔ `MEC4044Z` OR `MEC4054Z` OR `EEE4124C`
-* **EEE4124C** ➔ `MEC4063C`
-* **COMPSTUD** (Complementary Studies requirement) ➔ Satisfied by passing any of: `ACC1006F`, `AGE1002S`, `ANS2401L`, `AST1000F`, `AXL1100S`, `AXL1400F`, `AXL1401S`, `BIO1004S`, `BUS1007S`, `BUS1036F`, `BUS1036S`, `BUS2010F`, `BUS2010S`, `ECO1006F`, `ECO1007F`, `ECO1007S`, `ECO1010F`, `ECO1010S`, `ECO1011F`, `ECO1011S`, `ECO2007S`, `EGS1003S`, `ELL1016S`, `END1019L`, `END1019P`, `END1019Z`, `END1023S`, `FAM1000L`, `FAM1000S`, `FAM1001P`, `FTX1005S`, `FTX2000S`, `GEO1009F`, `HST1014S`, `HST2034P`, `MUZ1339H`, `MUZ1381H`, `PHI1010S`, `PHI1024F`, `PHI1025F`, `PHI2012F`, `PHI2040S`, `PHI2043F`, `PHI2043P`, `PHI2043S`, `PSY1004F`, `REL1006S`, `SLL1002F`, `SLL1002L`, `SLL1002P`, `SLL1002S`, `SLL1016S`, `SLL1018S`, `SLL1058F`, `SLL1060F`, `SLL1062F`, `SLL1062L`, `SLL1063S`, `SLL1064F`, `SLL1097S`, `SLL1101F`, `SLL2060F`, `SLL3060F`, `SOC1005J`.
+* **COMPSTUD** (Complementary Studies requirement) ➔ Courses that satisfy ECSA’s complementary studies definition, which includes:
+  - Engineering economics, management, effective communication, and technology impact on society.
+  - Humanities or social‑science subjects that broaden the engineer’s perspective.
+  The following example courses have historically been accepted (non‑exhaustive). Courses not recognised by ECSA, such as any STA series or CSC courses, do **not** satisfy this requirement.
+
+    `ACC1006F`, `AGE2002S`, `ANS2401L`, `AST1000F`, `AXL1100S`, `AXL1400F`, `AXL1401S`, `BIO1004S`, `BUS1007S`, `BUS1036F`, `BUS1036S`, `BUS2010F`, `BUS2010S`, `ECO1006F`, `ECO1007F`, `ECO1007S`, `ECO1010F`, `ECO1010S`, `ECO1011F`, `ECO1011S`, `ECO2007S`, `EGS1003S`, `ELL1016S`, `END1019L`, `END1019P`, `END1019Z`, `END1023S`, `FAM1000L`, `FAM1000S`, `FAM1001P`, `FTX1005S`, `FTX2000S`, `GEO1009F`, `HST1014S`, `HST2034P`, `MUZ1339H`, `MUZ1381H`, `PHI1010S`, `PHI1024F`, `PHI1025F`, `PHI2012F`, `PHI2040S`, `PHI2043F`, `PHI2043P`, `PHI2043S`, `PSY1004F`, `REL1006S`, `SLL1002F`, `SLL1002L`, `SLL1002P`, `SLL1002S`, `SLL1016S`, `SLL1018S`, `SLL1058F`, `SLL1060F`, `SLL1062F`, `SLL1062L`, `SLL1063S`, `SLL1064F`, `SLL1097S`, `SLL1101F`, `SLL2060F`, `SLL3060F`, `SOC1005J`.`, `SLL1060F`, `SLL1062F`, `SLL1062L`, `SLL1063S`, `SLL1064F`, `SLL1097S`, `SLL1101F`, `SLL2060F`, `SLL3060F`, `SOC1005J`.
 * **CML4607F** ➔ `CML4607Z` OR `MEC4022Z`
 
 ---
@@ -181,18 +183,25 @@ This timetable model enables staff to systematically query and avoid hard clashe
 
 ### Core Progression Variables
 * **eedur (EEE Duration)**: Number of unique years the student has been registered under any EEE program code (`EB009`, `EB809`, `EB011`, `EB811`, `EB022`, `EB822`).
-* **nstrikes (Progression Strikes)**: The count of previous academic defaults. A year receives a strike if its progression code is `FECR`, `RACC`, or `RENN` while registered in EEE.
 * **ubdrdur (Unbroken Duration)**: Consecutive years of EEE registration.
-* **tfer (Transfer Status)**:
+* **tfer (Transfer Status):**
   * `0` = Standard direct-entry student.
   * `1` = Internal transfer (first registered at UCT in another department).
   * `2` = External transfer (has transfer credits `CR`, `CX`, `EX` in their first year).
-* **N (Standard Degree Time)**:
+* **N (Standard Degree Time):**
   * `N = 4` for Standard Students.
   * `N = 5` for ASPECT Students.
 
+### Progression Assessment
+Progression is assessed **solely** on the credits passed in the current academic year (and historically over the two‑year window where applicable). There are **no rules** that limit progression based on the number of times a student has failed a particular course. The key determinants are:
+* Annual credit thresholds (see section 6‑A/B). 
+* Total cumulative credits towards the degree. 
+* Satisfaction of core and elective requirements.
+
+The previous `nstrikes` concept is retained only for historical record‑keeping and does **not** influence progression decisions.
+
 ### Exclusion Rules (N+1 / N+2 Rules)
-A student is academically excluded (marked as `RENN` or `FECR` depending on strikes) if they cannot complete their degree within the university progression limits:
+A student is academically excluded (marked as `RENN` or `FECR` depending on status) if they cannot complete their degree within the university progression limits:
 * **N+1 Rule**: If remaining years to finish ($ (N + 1) - \text{eedur} $) is $\le 0$ and the student still has credits outstanding to graduate, they fail the N+1 rule.
 * **N+2 Rule**: Similarly, the maximum allowable registration duration is $N + 2$ years. If remaining years to finish ($ (N + 2) - \text{eedur} $) is $\le 0$, they exceed the limit.
 
@@ -403,7 +412,7 @@ Advisors often require "synthetic" projections to understand a student's potenti
 
 ### C. Best-Case (Supps/DE Passed) Scenario
 * **Definition**: Assumes the student passes all pending supplementary and deferred exams in the current year.
-* **Recalculation Rules**: Set the result for any course in the current year with grade symbol `'FS'`, `'OSS'`, `'DE'`, or `'OS'` to `'PA'` or a numeric mark of 100% or 50% (best-case best vs worst pass) and grant full credits.
+* **Recalculation Rules**: Set the result for any course in the current year with grade symbol `'FS'` (failed course with supplementary exam awarded) to `'PA'` (pass) when simulating best‑case scenarios, as this indicates the student has been granted a supplementary exam. If the symbol is `'SF'` (supplementary failed), treat the course as a final failure. Also handle `'OSS'`, `'DE'`, or `'OS'` as pending/supplementary outcomes as before, granting full credits on pass simulation.
 
 ### D. How to present a synthetic record
 When the user explicitly asks for a synthetic record or asks "what if they pass all courses?", provide:
@@ -443,7 +452,7 @@ An advisor must apply these rules to check for AA eligibility:
 3. **AA Exclusions**:
    * **Capstone Project (`EEE4022F`/`EEE4022S`)**: Never eligible for Additional Assessment.
    * **Non-Exam Courses**: Suffixes `'C'`, `'X'`, `'L'`, `'Z'` (representing practical training, block courses, field work, or laboratories) do not have written exams and are never eligible for Additional Assessment.
-   * **Already Awarded Supp / DP Refused**: If a student has already been awarded a supplementary or deferred exam for that course in the current year (mark ends in `S`, or symbol is `FS`, `OSS`, `DE`, `OS`), or if they were refused DP (`DPR`) for that course, they cannot be awarded Additional Assessment for it.
+   * **Already Awarded Supp / DP Refused**: If a student has already been awarded a supplementary or deferred exam for that course in the current year (mark ends in `S`, or symbol is `FS` meaning a supplementary exam is pending, `SF` meaning the supplementary exam was failed, `OSS`, `DE`, `OS`), or if they were refused DP (`DPR`) for that course, they cannot be awarded Additional Assessment for it.
    * **Historically Passed / Satisfied via Equivalents**: If a student has already passed the course historically, or passed an equivalent course (e.g. `PHY1014S` satisfying `PHY1012F`), the course is not considered failed.
 4. **Already Qualifying / Practical Training Exclusion**: Students who are already qualified (`QUAL`) under actual or simulated results, or who only lack 0-credit practical training courses `EEE1000X`/`EEE3000X` (`QUAS`), do not need AA and must be marked as `No`.
 
