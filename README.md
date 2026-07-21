@@ -24,12 +24,21 @@ The codebase is divided into three primary modules:
    - Defines core courses (`CORE`), elective courses by number (`NECORE`), and elective courses by credit total (`CECORE`).
    - Provides a comprehensive `COURSE_EQUIVALENCIES` list (e.g., mapping old course codes to new ones, or listing acceptable alternatives like `MAM1020F` vs `MAM1000W`).
 
+## Student Advising Prompts
+
+In addition to batch simulation, the codebase supports interactive advising using AI LLMs. The prompts and guides are located in the following files:
+
+* **[uct_ee_staffadvisor.md](uct_ee_staffadvisor.md)**: System prompt for a custom GPT/Gemini to prime a session to help staff advisors provide curriculum advice to students.
+* **[uct_ee_studentadvisor.md](uct_ee_studentadvisor.md)**: A student-facing equivalent of the staff advising prompt. It presents itself as a supportive, empathetic assistant directly addressing the student and includes a disclaimer that the information generated is not official or definitive.
+* **[uct_ee_genadvisors.md](uct_ee_genadvisors.md)**: Prompt/instructions for developer agents to regenerate or align the staff-facing and student-facing system prompts when the underlying curriculum rules in Python change.
+* **[advising_workflow_guide.md](advising_workflow_guide.md)**: Practical workflow guide for department advisors on configuring and executing the AI-advising process.
+
 ## Key Concepts & Scenarios
 
 The system checks various thresholds (e.g., N+1, N+2 rules, total credits, GPA) to assign progression codes:
-* **CONT**: Continue
+* **CONT**: Continue (Good standing)
 * **QUAL**: Qualify (Graduating)
-* **RENN / FECR**: Progression defaults (Renew / Readmission required)
+* **RENN / FECR**: Progression defaults (Academic exclusion / FEC Review required)
 * **SUPP / FECP / QUAS**: Conditional states depending on the outcome of Supplementary/Deferred exams.
 
 The simulations generated in the Excel output include:
@@ -41,7 +50,7 @@ The simulations generated in the Excel output include:
 
 ## Notes for Developers and AI Assistants
 
-**Before making changes, please read the [`ai_primer.md`](ai_primer.md) file!**
+**Before making changes, please read the [.agents/AGENTS.md](.agents/AGENTS.md) file!**
 
 * **MATLAB Legacy**: This codebase is a port of a legacy MATLAB script. You may notice artifacts of this history, such as 1-based indexing comments, variables named similarly to MATLAB cell arrays/structs, and certain logic patterns preserved to maintain strict output parity with the old system.
 * **Primary Data Structure (`stinfo`)**: Data is heavily passed around as a list of dictionaries (`stinfo`). Each student record typically contains:
