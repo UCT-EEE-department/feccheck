@@ -42,11 +42,11 @@ Run [advise_student.py](./scripts/advise_student.py) (`--student-mode` is enable
 
 1. **From a Pasted CRS Transcript** (save the student's pasted CRS text to a scratch file; missing `,Passed:` footers are added automatically):
    ```bash
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/studentadvisor/scripts/advise_student.py --crs-text /tmp/my_crs.txt
+   python3 .agents/skills/studentadvisor/scripts/advise_student.py --crs-text /tmp/my_crs.txt
    ```
 2. **From a Conversational List of Courses** (when a student lists courses informally rather than pasting CRS CSV rows):
    ```bash
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/studentadvisor/scripts/advise_student.py --synthetic-json '{"campus_id":"STUDENT","name":"Student","program":"EB022","gpa":64.0,"courses":[{"course":"MAM1020F","yt":2025,"perc":"65"},{"course":"EEE1008F","yt":2025,"perc":"47S","symbol":"FS"}]}'
+   python3 .agents/skills/studentadvisor/scripts/advise_student.py --synthetic-json '{"campus_id":"STUDENT","name":"Student","program":"EB022","gpa":64.0,"courses":[{"course":"MAM1020F","yt":2025,"perc":"65"},{"course":"EEE1008F","yt":2025,"perc":"47S","symbol":"FS"}]}'
    ```
 3. **Validate Next-Semester Course Choices (`--propose`) & What-Ifs**:
    - Append `--propose EEE2045F,EEE2046F,MAM2083F,MEC1009F` (or run standalone with `--passed-list CSC1015F,EEE1008F,MAM1020F,MAM1021S,PHY1012F,PHY1013S`) to verify **Prerequisites**, **Corequisites**, **`EEE4022S` Capstone eligibility**, and **Hard vs Soft (`_P`) Timetable Clashes**.

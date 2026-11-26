@@ -39,24 +39,24 @@ Run [advise_student.py](./scripts/advise_student.py) from the terminal before dr
 
 1. **Lookup by Campus ID or Name in Workspace CRS CSVs** (auto-discovers newest CRS dump, or pass `--crs <csv>` and optional `--updates <xlsx>`):
    ```bash
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/scripts/advise_student.py --id ABCDEF001
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/scripts/advise_student.py --name "Surname" --crs "/Users/nicolls/proj/eleceng/feccheck/UG FULL CSV _ 29 June 2026.csv"
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --id ABCDEF001
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --name "Surname" --crs "UG FULL CSV _ 29 June 2026.csv"
    ```
 2. **Audit a Pasted CRS Excerpt** (write snippet to scratch file; missing `,Passed:` footers are repaired automatically):
    ```bash
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/scripts/advise_student.py --crs-text /tmp/student_crs.txt
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --crs-text /tmp/student_crs.txt
    ```
 3. **Audit an Informal / Conversational Course List** (build a small JSON spec so `FECCheck` still computes exact credits and equivalencies):
    ```bash
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/scripts/advise_student.py --synthetic-json '{"campus_id":"TMP001","name":"Doe, Jane","program":"EB009","gpa":66.5,"courses":[{"course":"MAM1020F","yt":2025,"perc":"70"},{"course":"EEE1008F","yt":2025,"perc":"46S","symbol":"FS"}]}'
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --synthetic-json '{"campus_id":"TMP001","name":"Doe, Jane","program":"EB009","gpa":66.5,"courses":[{"course":"MAM1020F","yt":2025,"perc":"70"},{"course":"EEE1008F","yt":2025,"perc":"46S","symbol":"FS"}]}'
    ```
 4. **Validate Proposed Registrations & Simulate Custom What-Ifs**:
    - Append `--propose EEE3088F,EEE3090F,EEE3091F,EEE3092F` to any student audit (or pass `--passed-list ...` standalone) to check **Prerequisites**, **Corequisites**, **`EEE4022S/F` Capstone constraints**, and **2026 Hard vs Soft (`_P`) Timetable Clashes**.
    - Use `--pass-courses CODE1,CODE2:65`, `--fail-courses CODE3`, `--add-courses CODE4`, or `--as-program EB022` (for prospective internal transfers or stream switches).
 5. **Cohort Triage for Advising / FEC Meetings**:
    ```bash
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/scripts/advise_student.py --cohort-summary --filter-code RENN,FECR,SUPP,FECP,QUAS
-   python3 /Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/scripts/advise_student.py --cohort-summary --only-aa
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --cohort-summary --filter-code RENN,FECR,SUPP,FECP,QUAS
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --cohort-summary --only-aa
    ```
 
 ---

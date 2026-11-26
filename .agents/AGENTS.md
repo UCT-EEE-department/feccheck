@@ -51,12 +51,12 @@ The data flows through the system primarily as a list of dictionaries called `st
 In addition to batch FEC simulations run via Python, the project provides two AI advising layers:
 
 ### A. Antigravity Agent Skills (`.agents/skills/`)
-1. **[`staffadvisor`](file:///Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/SKILL.md)**: Assists human Student Advisors and FEC members. Uses `.agents/skills/staffadvisor/scripts/advise_student.py` to execute deterministic `FECCheck` audits, prerequisite/corequisite checks, 2026 timetable clash detection, and cohort FEC triage.
-2. **[`studentadvisor`](file:///Users/nicolls/proj/eleceng/feccheck/.agents/skills/studentadvisor/SKILL.md)**: Advises undergraduate students directly in second-person ("you") with mandatory EBE Handbook/FEC non-official disclaimers and `--student-mode` privacy enforcement.
+1. **[`staffadvisor`](./skills/staffadvisor/SKILL.md)**: Assists human Student Advisors and FEC members. Uses `.agents/skills/staffadvisor/scripts/advise_student.py` to execute deterministic `FECCheck` audits, prerequisite/corequisite checks, 2026 timetable clash detection, and cohort FEC triage.
+2. **[`studentadvisor`](./skills/studentadvisor/SKILL.md)**: Advises undergraduate students directly in second-person ("you") with mandatory EBE Handbook/FEC non-official disclaimers and `--student-mode` privacy enforcement.
 
 ### B. Standalone Web Chat / Custom Gem Prompts
-1. **[uct_ee_staffadvisor.md](file:///Users/nicolls/proj/eleceng/feccheck/uct_ee_staffadvisor.md)** & **[uct_ee_studentadvisor.md](file:///Users/nicolls/proj/eleceng/feccheck/uct_ee_studentadvisor.md)**: Self-contained system prompts for Gemini Gems / web chats without Python execution.
-2. **[advising_workflow_guide.md](file:///Users/nicolls/proj/eleceng/feccheck/advising_workflow_guide.md)**: Guide for EEE advisors explaining Custom Gem setup and daily workflow.
-3. **[uct_ee_genadvisors.md](file:///Users/nicolls/proj/eleceng/feccheck/uct_ee_genadvisors.md)**: Developer instructions for regenerating the standalone `.md` prompts when Python rules change.
+1. **[uct_ee_staffadvisor.md](../uct_ee_staffadvisor.md)** & **[uct_ee_studentadvisor.md](../uct_ee_studentadvisor.md)**: Self-contained system prompts for Gemini Gems / web chats without Python execution.
+2. **[advising_workflow_guide.md](../advising_workflow_guide.md)**: Guide for EEE advisors explaining Custom Gem setup and daily workflow.
+3. **[uct_ee_genadvisors.md](../uct_ee_genadvisors.md)**: Developer instructions for regenerating the standalone `.md` prompts when Python rules change.
 
 **Alignment Requirement**: Both the `.agents/skills/*/references/` manuals and the standalone `uct_ee_*advisor.md` prompts must stay aligned with `program_defs.py` and `fec_check.py`.
