@@ -40,7 +40,7 @@ Run [advise_student.py](./scripts/advise_student.py) from the terminal before dr
 1. **Lookup by Campus ID or Name in Workspace CRS CSVs** (auto-discovers newest CRS dump, or pass `--crs <csv>` and optional `--updates <xlsx>`):
    ```bash
    python3 .agents/skills/staffadvisor/scripts/advise_student.py --id ABCDEF001
-   python3 .agents/skills/staffadvisor/scripts/advise_student.py --name "Surname" --crs "UG FULL CSV _ 29 June 2026.csv"
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --name "Surname" --crs "<path-to-crs-dump.csv>"
    ```
 2. **Audit a Pasted CRS Excerpt** (write snippet to scratch file; missing `,Passed:` footers are repaired automatically):
    ```bash

@@ -1,5 +1,7 @@
 *.csv
 *.xlsx
+*.xls
+*.tsv
 __pycache__/
 fec_updates.xlsx
 !fec_updates-EXAMPLE.xlsx

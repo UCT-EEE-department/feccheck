@@ -2,6 +2,10 @@
 
 Welcome to the `feccheck` project. Please read this document to understand the codebase architecture, data structures, and business logic before making changes.
 
+> [!CAUTION]
+> **HARD POPIA RULE — NEVER COMMIT STUDENT RECORDS:**
+> You are **NEVER** allowed to stage, commit, or push any `.csv`, `.xlsx`, `.xls`, `.tsv`, or other file containing real student records, IDs, names, or marks (POPIA compliance). Always keep `*.csv`, `*.xlsx`, `*.xls`, `*.tsv`, and `fec_updates.xlsx` excluded in `.gitignore`, and never reference real student data files in committed docs or examples.
+
 ## 1. Project Purpose
 This project automates and simulates progression decisions for the Faculty Examination Committee (FEC) in the Electrical Engineering (EEE) department. 
 
