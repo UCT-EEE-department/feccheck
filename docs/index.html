@@ -3,361 +3,210 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UCT EEE Staff Academic Advisor — Launcher</title>
-  <style>
-    :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --border: #e2e8f0;
-      --accent: #003b5c;
-      --accent-hover: #002a42;
-      --warn-bg: #fffbeb;
-      --warn-border: #f59e0b;
-      --ok-bg: #f0fdf4;
-      --ok-border: #22c55e;
-      --code-bg: #f1f5f9;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.55;
-      padding: 2rem 1rem;
-    }
-    .container { max-width: 860px; margin: 0 auto; }
-    h1 { margin: 0 0 0.25rem; font-size: 1.75rem; color: var(--accent); }
-    .subtitle { color: var(--muted); margin: 0 0 1.5rem; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 1.25rem;
-    }
-    .card h2 { margin-top: 0; font-size: 1.2rem; color: var(--accent); }
-    .btn-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin: 0.9rem 0; }
-    button.primary {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 7px;
-      padding: 0.65rem 1.1rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button.primary:hover { background: var(--accent-hover); }
-    button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
-    button.secondary-btn {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 0.6rem 1rem;
-      font-size: 0.92rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button.secondary-btn:hover:not(:disabled) { background: var(--code-bg); }
-    button.secondary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    a.secondary {
-      display: inline-block;
-      padding: 0.55rem 0.95rem;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      color: var(--text);
-      text-decoration: none;
-      font-size: 0.9rem;
-      background: #fff;
-    }
-    a.secondary:hover { background: var(--code-bg); }
-    .status { font-size: 0.9rem; color: #15803d; font-weight: 600; }
-    .notice {
-      background: var(--warn-bg);
-      border-left: 4px solid var(--warn-border);
-      padding: 0.75rem 1rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      margin: 1rem 0 0;
-    }
-    .ok-box {
-      background: var(--ok-bg);
-      border-left: 4px solid var(--ok-border);
-      padding: 0.65rem 1rem;
-      border-radius: 4px;
-      font-size: 0.88rem;
-      margin: 0.75rem 0;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 0.85rem;
-      margin-top: 0.75rem;
-    }
-    .mini {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.85rem 1rem;
-      background: #fcfcfd;
-    }
-    .mini h3 { margin: 0 0 0.35rem; font-size: 1rem; }
-    .mini p { margin: 0; font-size: 0.88rem; color: var(--muted); }
-    code, pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      background: var(--code-bg);
-      border-radius: 5px;
-    }
-    code { padding: 0.15rem 0.35rem; font-size: 0.86rem; }
-    pre { padding: 0.75rem 1rem; overflow-x: auto; font-size: 0.82rem; margin: 0.5rem 0; max-height: 220px; }
-    ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
-    li { margin-bottom: 0.35rem; font-size: 0.92rem; }
-    .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin: 0.75rem 0; }
-    input[type="text"], select {
-      padding: 0.55rem 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      font-size: 0.92rem;
-      min-width: 240px;
-    }
-    .muted { color: var(--muted); font-size: 0.88rem; }
-  </style>
+  <title>UCT EEE Staff Advising &amp; Provisional Registration (FECCheck)</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>UCT EEE Staff Academic Advisor</h1>
-    <p class="subtitle">Federated launcher for <code>staffadvisor</code> — works with ChatGPT, Claude, Gemini, Antigravity, and Claude Code.</p>
-
-    <div class="card">
-      <h2>Option 1: Web Chat (ChatGPT, Claude, Gemini — no install)</h2>
-      <p>Copy the latest Staff Advisor system prompt directly from <code>UCT-EEE-department/feccheck</code> and start a session in your preferred AI tool:</p>
-      <div class="btn-row">
-        <button class="primary" onclick="copyPrompt()">Copy Staff Advisor Prompt</button>
-        <a class="secondary" href="https://raw.githubusercontent.com/UCT-EEE-department/feccheck/main/uct_ee_staffadvisor.md" target="_blank" rel="noopener">View Raw Prompt</a>
-        <span class="status" id="copyStatus"></span>
-      </div>
-
-      <div class="grid">
-        <div class="mini">
-          <h3>ChatGPT</h3>
-          <p>Paste into a new chat (or a <strong>Custom GPT</strong>'s Instructions), then paste the anonymised record below.</p>
-        </div>
-        <div class="mini">
-          <h3>Claude</h3>
-          <p>Paste into a new chat (or a <strong>Claude Project</strong>'s Instructions) and optionally attach the reference files.</p>
-        </div>
-        <div class="mini">
-          <h3>Gemini</h3>
-          <p>Paste into a new chat (or a <strong>Custom Gem</strong>'s Instructions), then paste the anonymised record below.</p>
-        </div>
-      </div>
-
-      <p style="margin-top: 1rem; margin-bottom: 0.35rem; font-size: 0.92rem;"><strong>Optional Reference Manuals</strong> (for uploading as Project / Custom GPT / Gem knowledge):</p>
-      <ul>
-        <li><a href="https://raw.githubusercontent.com/UCT-EEE-department/feccheck/main/.agents/skills/staffadvisor/references/curriculum_and_equivalencies.md" target="_blank" rel="noopener">Curriculum &amp; Equivalencies</a></li>
-        <li><a href="https://raw.githubusercontent.com/UCT-EEE-department/feccheck/main/.agents/skills/staffadvisor/references/progression_and_stages.md" target="_blank" rel="noopener">Progression Rules, Honours &amp; Cycle Stages</a></li>
-        <li><a href="https://raw.githubusercontent.com/UCT-EEE-department/feccheck/main/.agents/skills/staffadvisor/references/timetable_2026.md" target="_blank" rel="noopener">2026 Timetable Grids &amp; Clash Rules</a></li>
-        <li><a href="https://raw.githubusercontent.com/UCT-EEE-department/feccheck/main/.agents/skills/staffadvisor/references/report_template.md" target="_blank" rel="noopener">Standardised Staff Advising Report Template</a></li>
-      </ul>
+  <header class="topbar no-print">
+    <div>
+      <h1>UCT EEE Academic Advising &amp; Registration Tool</h1>
+      <div class="sub">Deterministic <code>FECCheck</code> Audit • 2026 Timetable &amp; Prerequisite Verifier • PeopleSoft Provisional Certificate</div>
     </div>
+    <div class="status-pills">
+      <span class="pill warn" id="engineStatus">Loading Python Engine…</span>
+      <span class="pill warn" id="crsPill">No CRS Loaded</span>
+    </div>
+  </header>
 
-    <div class="card">
-      <h2>Local OneDrive CRS Lookup &amp; Anonymiser (POPIA-Safe)</h2>
-      <div class="ok-box">
-        <strong>100% Local in Your Browser:</strong> Your CRS CSV file is read directly from your disk (e.g. synced OneDrive folder) in JavaScript and is <strong>never uploaded</strong> anywhere. Name, Campus ID, and Empl ID are stripped before copying.
+  <main class="container">
+    <!-- Step 1: OneDrive CRS File Loader -->
+    <section class="card no-print">
+      <div class="crs-bar">
+        <div class="crs-info" id="crsSummaryText">
+          <strong>1. Load Departmental CRS File:</strong> Click <em>Load CRS CSV</em> and open
+          <code>OneDrive - University of Cape Town / EE Department / FEC / CURRENT_ADVISING_CRS.csv</code>.
+          <div style="font-size:0.8rem; color:#475569; margin-top:0.2rem;">
+            POPIA-Safe: Processed &amp; cached 100% locally in your browser. Student data is never uploaded anywhere.
+          </div>
+        </div>
+        <div class="controls-row">
+          <input type="file" id="crsFileInput" accept=".csv,.txt" style="display:none;" onchange="handleFilePicked(this.files[0])" />
+          <button class="primary" onclick="document.getElementById('crsFileInput').click()">Load / Update CRS CSV</button>
+          <button class="secondary small" id="clearCacheBtn" onclick="clearCachedCrs()" style="display:none;">Clear Cached CRS</button>
+        </div>
       </div>
-      <div class="controls">
-        <input type="file" id="crsFile" accept=".csv,.txt" onchange="loadCsvFile(this.files[0])" />
-        <span class="muted" id="fileInfo">Select your local CRS CSV dump...</span>
-      </div>
-      <div class="controls">
-        <input type="text" id="searchInput" placeholder="Search Campus ID or Surname..." oninput="filterStudents()" disabled />
-        <select id="studentSelect" onchange="selectStudent()" disabled>
-          <option value="">-- Select matched student --</option>
+      <div id="crsWarningBanner" class="banner warn" style="display:none;"></div>
+    </section>
+
+    <!-- Step 2: Student Lookup & Simulation Bar -->
+    <section class="card no-print">
+      <div class="controls-row">
+        <strong>2. Find Student:</strong>
+        <input type="text" id="searchInput" placeholder="Type Campus ID or Surname…" oninput="filterStudents()" disabled />
+        <select id="studentSelect" onchange="onStudentSelected()" disabled>
+          <option value="">-- Load CRS CSV first --</option>
         </select>
+        <label style="font-size:0.82rem; display:inline-flex; align-items:center; gap:0.3rem;">
+          <input type="checkbox" id="eeeOnlyCheck" checked onchange="filterStudents()" />
+          EEE only
+        </label>
+        <span style="margin-left:auto; display:inline-flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+          <label style="font-size:0.82rem;">Stream / Transfer:</label>
+          <select id="asProgramSelect" onchange="rerunAudit()" disabled>
+            <option value="">Student's Current Programme</option>
+            <option value="EB009">EB009 — Electrical Eng</option>
+            <option value="EB011">EB011 — Mechatronics</option>
+            <option value="EB022">EB022 — Elec &amp; Computer Eng</option>
+            <option value="EB809">EB809 — Electrical (ASPECT)</option>
+            <option value="EB811">EB811 — Mechatronics (ASPECT)</option>
+            <option value="EB822">EB822 — Elec &amp; Comp (ASPECT)</option>
+          </select>
+          <button class="secondary small" id="assumePassAllBtn" onclick="toggleAssumeAllCurrentPassed()" disabled>
+            Assume Current/Pending Passed
+          </button>
+          <button class="secondary small" id="resetSimBtn" onclick="resetOverrides()" disabled>
+            Reset Overrides
+          </button>
+        </span>
       </div>
-      <div class="btn-row">
-        <button class="primary" id="copyAnonBtn" onclick="copyAnonymised(false)" disabled>Copy Anonymised Record</button>
-        <button class="secondary-btn" id="copyBothBtn" onclick="copyAnonymised(true)" disabled>Copy Prompt + Anonymised Record</button>
-        <span class="status" id="anonStatus"></span>
-      </div>
-      <pre id="anonPreview" style="display:none;"></pre>
-      <div class="notice">
-        <strong>POPIA Note:</strong> Identifiers (Name, Campus ID, Empl ID) are replaced with <code>REDACTED</code> / <code>ANON00001</code>. Avoid typing a student's name or ID into your AI chat prompt.
-      </div>
+      <div id="auditErrorBanner" class="banner err" style="display:none;"></div>
+    </section>
+
+    <!-- Main Workspace (shown once a student is selected) -->
+    <div id="workspaceArea" style="display:none;">
+      <nav class="tabs no-print">
+        <button class="tab-btn active" data-tab="tab-audit" onclick="switchTab('tab-audit')">1. Academic Standing &amp; Degree Audit</button>
+        <button class="tab-btn" data-tab="tab-reg" onclick="switchTab('tab-reg')">2. Proposed Registration &amp; Clashes (SEAT)</button>
+        <button class="tab-btn" data-tab="tab-cert" onclick="switchTab('tab-cert')">3. PeopleSoft Certificate &amp; Concessions</button>
+        <button class="tab-btn" data-tab="tab-ai" onclick="switchTab('tab-ai')">4. Ask Free AI Staff Advisor (POPIA-Safe)</button>
+      </nav>
+
+      <!-- TAB 1: Standing & Audit -->
+      <section id="tab-audit" class="tab-panel active">
+        <div class="card">
+          <div id="standingHeader"></div>
+          <div class="standing-grid" id="standingStats"></div>
+          <div id="honoursAndAaBanner"></div>
+        </div>
+
+        <div class="card">
+          <h2>Current / Most Recent Year Courses <span style="font-weight:400; font-size:0.82rem; color:#475569;">(Click Pass/Fail to test What-Ifs &amp; unlock prerequisites)</span></h2>
+          <div id="currentCoursesTable"></div>
+
+          <h3>FECCheck Progression Scenarios</h3>
+          <div id="scenariosTable"></div>
+        </div>
+
+        <div class="card">
+          <h2>Degree Audit Checklist (<code>tcert</code>)</h2>
+          <div id="degreeAuditContent"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: Registration & Clash Checker -->
+      <section id="tab-reg" class="tab-panel">
+        <div class="two-col">
+          <div class="card">
+            <h2>Candidate Courses</h2>
+            <div class="controls-row" style="margin-bottom:0.6rem;">
+              <button class="primary small" onclick="autoSelectEligibleCores()">Auto-Pick Eligible Cores</button>
+              <button class="secondary small" onclick="clearProposed()">Clear All</button>
+            </div>
+            <div class="cand-list" id="candidateList"></div>
+
+            <h3 style="margin-top:0.9rem;">Add Any Course Code</h3>
+            <div class="controls-row">
+              <input type="text" id="customCourseInput" list="allCoursesDatalist" placeholder="e.g. EEE3088F or HUB4049F" style="min-width:170px; flex:1;" />
+              <datalist id="allCoursesDatalist"></datalist>
+              <button class="secondary" onclick="addCustomCourse()">Add</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <h2>Proposed Registration Validation</h2>
+              <div id="creditMeterBox"></div>
+              <div id="proposalChecksTable"></div>
+            </div>
+
+            <div class="card">
+              <h2>2026 Timetable Grid &amp; Clash Check</h2>
+              <div id="clashSummaryBanner"></div>
+              <h3>Semester 1 (<code>F</code>)</h3>
+              <div id="ttSem1"></div>
+              <h3>Semester 2 (<code>S</code> / <code>C</code>)</h3>
+              <div id="ttSem2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Provisional Registration Certificate & Concessions -->
+      <section id="tab-cert" class="tab-panel">
+        <div class="card no-print">
+          <h2>Advisor Sign-Off Details <span style="font-weight:400; font-size:0.82rem; color:#475569;">(Saved in your browser for next student)</span></h2>
+          <div class="controls-row" style="margin-bottom:0.65rem;">
+            <input type="text" id="advisorName" placeholder="Advisor Name (e.g. A/Prof F. Nicolls)" oninput="saveAdvisorMeta(); renderCertificate();" style="min-width:240px;" />
+            <input type="text" id="advisorEmail" placeholder="Advisor Email (e.g. fred.nicolls@uct.ac.za)" oninput="saveAdvisorMeta(); renderCertificate();" style="min-width:240px;" />
+            <label style="font-size:0.84rem;">Reg Year:
+              <select id="regYearSelect" onchange="renderCertificate()">
+                <option value="2026">2026</option>
+                <option value="2027" selected>2027</option>
+              </select>
+            </label>
+          </div>
+          <div>
+            <label style="font-size:0.84rem; font-weight:600; display:block; margin-bottom:0.25rem;">Advisor Notes / Concession Motivation (printed on certificate):</label>
+            <textarea id="advisorNotes" rows="3" style="width:100%;" placeholder="Optional conditions, prerequisite waiver motivation, or timetable clash note for PeopleSoft / HoD approval…" oninput="renderCertificate()"></textarea>
+          </div>
+          <div class="controls-row" style="margin-top:0.75rem;">
+            <button class="primary" onclick="window.print()">Print / Save PDF (PeopleSoft Attachment)</button>
+            <button class="secondary" onclick="copyCertificateText()">Copy Summary for Student Email / PeopleSoft</button>
+            <span id="certCopyStatus" style="color:#15803d; font-weight:600; font-size:0.85rem;"></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cert-sheet" id="certificatePreview"></div>
+        </div>
+      </section>
+
+      <!-- TAB 4: Free AI Staff Advisor Handoff -->
+      <section id="tab-ai" class="tab-panel">
+        <div class="card">
+          <h2>Ask Free AI Staff Advisor ($0 — Zero Subscriptions Required)</h2>
+          <div class="banner ok">
+            <strong>POPIA Protected &amp; Zero Hallucination Math:</strong> Clicking <em>Copy Prompt + Anonymised Audit</em> copies the official EEE Staff Advisor instructions <strong>plus</strong> the exact deterministic <code>FECCheck</code> audit and proposed course/clash checks computed above—with the student's Name, Campus ID, and Empl ID completely stripped (<code>[REDACTED]</code>).
+          </div>
+
+          <div style="margin:0.75rem 0;">
+            <label style="font-weight:600; font-size:0.86rem; display:block; margin-bottom:0.25rem;">Optional specific question to append for the AI:</label>
+            <input type="text" id="aiQuestionInput" style="width:100%;" placeholder="e.g. Draft a short concession motivation and suggest the safest 2027 load given N+1 limits." />
+          </div>
+
+          <div class="controls-row" style="margin:0.9rem 0;">
+            <button class="primary" onclick="copyAiBundle()">1. Copy Prompt + Anonymised FECCheck Audit</button>
+            <span id="aiCopyStatus" style="color:#15803d; font-weight:700;"></span>
+          </div>
+
+          <h3>2. Open Your Preferred Free AI &amp; Paste (<code>Ctrl+V</code> / <code>Cmd+V</code>):</h3>
+          <div class="controls-row">
+            <a class="btn-link secondary" href="https://copilot.microsoft.com/" target="_blank" rel="noopener">Open Microsoft Copilot (UCT Login)</a>
+            <a class="btn-link secondary" href="https://chatgpt.com/" target="_blank" rel="noopener">Open ChatGPT (Free)</a>
+            <a class="btn-link secondary" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude (Free)</a>
+            <a class="btn-link secondary" href="https://gemini.google.com/app" target="_blank" rel="noopener">Open Google Gemini (Free)</a>
+          </div>
+
+          <details style="margin-top:1rem;">
+            <summary style="cursor:pointer; font-weight:600; color:#003b5c;">Preview Anonymised Audit Sent to AI</summary>
+            <pre id="aiAnonPreview" style="background:#f1f5f9; padding:0.75rem; border-radius:6px; overflow-x:auto; font-size:0.8rem; max-height:320px;"></pre>
+          </details>
+        </div>
+      </section>
     </div>
+  </main>
 
-    <div class="card">
-      <h2>Option 2: Local Agentic Setup (Antigravity / Claude Code / Codex)</h2>
-      <p>Runs the deterministic <code>feccheck</code> Python engine (<code>advise_student.py</code>) locally on your machine—zero hallucinations on credit totals, equivalencies, or timetable clashes, and student data never leaves your computer.</p>
-      <pre>git clone https://github.com/UCT-EEE-department/feccheck.git
-cd feccheck
-pip install -r requirements.txt</pre>
-      <p style="font-size: 0.92rem; margin-bottom: 0;">Open the cloned folder in <strong>Antigravity</strong> (<code>.agents/skills/</code>) or <strong>Claude Code</strong> (<code>.claude/skills/</code>) and invoke <code>/staffadvisor</code>. Use <code>--anonymize</code> on <code>advise_student.py</code> to redact Name/IDs from CLI output.</p>
-    </div>
-  </div>
-
-  <script>
-    const PROMPT_URL = "https://raw.githubusercontent.com/UCT-EEE-department/feccheck/main/uct_ee_staffadvisor.md";
-    let parsedStudents = [];
-    let currentAnonText = "";
-
-    async function fetchPromptText() {
-      const res = await fetch(PROMPT_URL);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return await res.text();
-    }
-
-    async function copyPrompt() {
-      const status = document.getElementById("copyStatus");
-      status.textContent = "Fetching...";
-      try {
-        const text = await fetchPromptText();
-        await navigator.clipboard.writeText(text);
-        status.textContent = "Copied to clipboard!";
-      } catch (err) {
-        status.textContent = "Could not copy automatically — use 'View Raw Prompt' to copy.";
-      }
-    }
-
-    function parseCsvRow(line) {
-      const out = [];
-      let cur = "";
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
-          else { inQuotes = !inQuotes; }
-        } else if (ch === ',' && !inQuotes) {
-          out.push(cur); cur = "";
-        } else {
-          cur += ch;
-        }
-      }
-      out.push(cur);
-      return out;
-    }
-
-    function csvEscape(val) {
-      const s = String(val ?? "");
-      return (s.includes(",") || s.includes('"')) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    }
-
-    function loadCsvFile(file) {
-      if (!file) return;
-      const fileInfo = document.getElementById("fileInfo");
-      fileInfo.textContent = "Parsing locally...";
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const lines = e.target.result.split(/\r?\n/);
-        const students = [];
-        let current = null;
-        const cidRe = /^[A-Z]{6}[0-9]{3}$/;
-
-        for (const rawLine of lines) {
-          if (!rawLine.trim()) continue;
-          let cleaned = rawLine.replace(/""(.*?)""/g, '"$1"').trim().replace(/;+$/, "").replace(/^"+|"+$/g, "");
-          if (!cleaned) continue;
-          const row = parseCsvRow(cleaned);
-          if (row.length > 2 && cidRe.test((row[2] || "").trim())) {
-            if (current) students.push(current);
-            const surname = (row[0] || "").trim();
-            const first = (row[1] || "").trim();
-            const cid = (row[2] || "").trim().toUpperCase();
-            const rest = row.slice(4);
-            const anonHeader = ["REDACTED", "STUDENT", "ANON00001", "0000000", ...rest].map(csvEscape).join(",");
-            current = {
-              name: `${surname}, ${first}`,
-              campusId: cid,
-              program: (row[4] || "").trim(),
-              lines: [anonHeader]
-            };
-          } else if (current) {
-            current.lines.push(rawLine);
-            if (rawLine.includes("Passed:")) {
-              students.push(current);
-              current = null;
-            }
-          }
-        }
-        if (current) {
-          current.lines.push(",Passed:,,,,");
-          students.push(current);
-        }
-
-        parsedStudents = students;
-        fileInfo.textContent = `Loaded ${students.length} student records locally.`;
-        document.getElementById("searchInput").disabled = false;
-        document.getElementById("studentSelect").disabled = false;
-        filterStudents();
-      };
-      reader.readAsText(file, "ISO-8859-1");
-    }
-
-    function filterStudents() {
-      const q = document.getElementById("searchInput").value.trim().toUpperCase();
-      const sel = document.getElementById("studentSelect");
-      sel.innerHTML = '<option value="">-- Select matched student --</option>';
-      const matches = parsedStudents.filter(s =>
-        !q || s.campusId.includes(q) || s.name.toUpperCase().includes(q)
-      ).slice(0, 50);
-      matches.forEach((s) => {
-        const idx = parsedStudents.indexOf(s);
-        const opt = document.createElement("option");
-        opt.value = String(idx);
-        opt.textContent = `${s.campusId} — ${s.name} (${s.program || "EEE"})`;
-        sel.appendChild(opt);
-      });
-      if (matches.length === 1) {
-        sel.value = String(parsedStudents.indexOf(matches[0]));
-        selectStudent();
-      } else {
-        currentAnonText = "";
-        document.getElementById("copyAnonBtn").disabled = true;
-        document.getElementById("copyBothBtn").disabled = true;
-        document.getElementById("anonPreview").style.display = "none";
-      }
-    }
-
-    function selectStudent() {
-      const val = document.getElementById("studentSelect").value;
-      const preview = document.getElementById("anonPreview");
-      if (val === "") {
-        currentAnonText = "";
-        document.getElementById("copyAnonBtn").disabled = true;
-        document.getElementById("copyBothBtn").disabled = true;
-        preview.style.display = "none";
-        return;
-      }
-      const student = parsedStudents[Number(val)];
-      currentAnonText = student.lines.join("\n");
-      preview.textContent = currentAnonText;
-      preview.style.display = "block";
-      document.getElementById("copyAnonBtn").disabled = false;
-      document.getElementById("copyBothBtn").disabled = false;
-      document.getElementById("anonStatus").textContent = "";
-    }
-
-    async function copyAnonymised(includePrompt) {
-      const status = document.getElementById("anonStatus");
-      if (!currentAnonText) return;
-      try {
-        let payload = currentAnonText;
-        if (includePrompt) {
-          status.textContent = "Fetching prompt...";
-          const prompt = await fetchPromptText();
-          payload = prompt + "\n\n---\n\nHere is the anonymised student record to audit:\n\n```csv\n" + currentAnonText + "\n```";
-        }
-        await navigator.clipboard.writeText(payload);
-        status.textContent = includePrompt ? "Copied prompt + anonymised record!" : "Copied anonymised record!";
-      } catch (err) {
-        status.textContent = "Copy failed — select and copy from the preview box.";
-      }
-    }
-  </script>
+  <script src="./app.js"></script>
 </body>
 </html>

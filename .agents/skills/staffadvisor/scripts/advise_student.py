@@ -96,27 +96,63 @@ PERIOD_LABELS = [
 DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
 
+def _candidate_crs_dirs() -> List[Path]:
+    """Return cross-platform search directories (env var, macOS/Windows OneDrive FEC, workspace)."""
+    dirs: List[Path] = []
+    env_crs = os.environ.get("FECCHECK_CRS_DIR")
+    if env_crs:
+        dirs.append(Path(env_crs))
+
+    # Windows / cross-platform OneDrive environment variables
+    for env_key in ("OneDriveCommercial", "ONEDRIVECOMMERCIAL", "OneDrive", "ONEDRIVE"):
+        od_root = os.environ.get(env_key)
+        if od_root:
+            dirs.append(Path(od_root) / "EE Department" / "FEC")
+
+    # Standard macOS & Windows home directory OneDrive locations
+    try:
+        home = Path.home()
+        dirs.append(home / "OneDrive - University of Cape Town" / "EE Department" / "FEC")
+        cloud_storage = home / "Library" / "CloudStorage"
+        if cloud_storage.is_dir():
+            for od_dir in sorted(cloud_storage.glob("OneDrive*")):
+                dirs.append(od_dir / "EE Department" / "FEC")
+    except Exception:
+        pass
+
+    dirs.extend([FECCHECK_DIR, FECCHECK_DIR.parent])
+    return dirs
+
+
 def discover_default_crs_files() -> List[Path]:
-    """Find candidate CRS CSV dumps in feccheck/ and its parent workspace."""
+    """Find candidate CRS CSV dumps across OneDrive FEC and workspace, prioritising CURRENT_ADVISING_CRS.csv."""
+    canonical: List[Path] = []
     candidates: List[Path] = []
-    search_dirs = [FECCHECK_DIR, FECCHECK_DIR.parent]
     seen: Set[Path] = set()
-    for d in search_dirs:
-        if not d.is_dir():
+    for d in _candidate_crs_dirs():
+        try:
+            if not d.is_dir():
+                continue
+            canon_file = d / "CURRENT_ADVISING_CRS.csv"
+            if canon_file.is_file():
+                rp = canon_file.resolve()
+                if rp not in seen:
+                    seen.add(rp)
+                    canonical.append(rp)
+            for p in d.glob("*.csv"):
+                rp = p.resolve()
+                if rp in seen:
+                    continue
+                name_upper = p.name.upper()
+                if "GPA" in name_upper:
+                    continue
+                if "CSV" in name_upper or "CRS" in name_upper:
+                    seen.add(rp)
+                    candidates.append(rp)
+        except PermissionError:
             continue
-        for p in d.glob("*.csv"):
-            rp = p.resolve()
-            if rp in seen:
-                continue
-            name_upper = p.name.upper()
-            if "GPA" in name_upper:
-                continue
-            if "CSV" in name_upper or "CRS" in name_upper:
-                seen.add(rp)
-                candidates.append(rp)
-    # Sort newest modified/largest recent dumps first, preferring UG FULL CSV June 2026 then March 2026
     candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    return candidates
+    return canonical + candidates
 
 
 def load_course_titles() -> Dict[str, str]:
@@ -1278,9 +1314,181 @@ def main() -> None:
         audit["profile"]["empl_id"] = ""
 
     if args.format == "json":
-        print(json.dumps(audit, indent=2))
+        print(json.dumps(_clean_for_json(audit), indent=2))
     else:
         print(render_audit_markdown(audit, student_mode=args.student_mode))
+
+
+def _clean_for_json(obj: Any) -> Any:
+    """Recursively replace NaN/Inf and numpy scalars so json.dumps produces strict RFC 8259 JSON."""
+    if isinstance(obj, dict):
+        return {str(k): _clean_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_clean_for_json(v) for v in obj]
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating, float)):
+        val = float(obj)
+        if np.isnan(val) or np.isinf(val):
+            return None
+        return val
+    if isinstance(obj, (np.bool_,)):
+        return bool(obj)
+    return obj
+
+
+def get_catalog_metadata() -> str:
+    """Return JSON catalog of courses, credits, programmes, and 2026 timetable grids for browser UI."""
+    all_courses: Set[str] = set(COURSE_CREDITS.keys())
+    for pg in PROGRAM_SPECS:
+        for c in pg.get("core", []):
+            if c != "COMPSTUD":
+                all_courses.add(c)
+        for grp in pg.get("necore", []):
+            all_courses.update(str(x) for x in grp[1:])
+        for grp in pg.get("cecore", []):
+            all_courses.update(str(x) for x in grp[1:])
+    for grid in (TIMETABLE_SEMESTER_1, TIMETABLE_SEMESTER_2):
+        for row in grid:
+            for cell in row:
+                for tok in cell:
+                    all_courses.add(tok.replace("_P", "").upper())
+
+    catalog = [
+        {"code": c, "credits": COURSE_CREDITS.get(c, 16)}
+        for c in sorted(all_courses)
+    ]
+    return json.dumps({
+        "courses": catalog,
+        "programs": PROG_DESCRIPTIONS,
+        "period_labels": PERIOD_LABELS,
+        "day_labels": DAY_LABELS,
+        "timetable_s1": TIMETABLE_SEMESTER_1,
+        "timetable_s2": TIMETABLE_SEMESTER_2,
+    })
+
+
+def run_browser_audit(
+    raw_crs_excerpt: str,
+    as_program: Optional[str] = None,
+    pass_courses: Optional[List[str]] = None,
+    fail_courses: Optional[List[str]] = None,
+    add_courses: Optional[List[str]] = None,
+    propose_courses: Optional[List[str]] = None,
+    phase: str = "eoy-exam",
+    course_titles: Optional[Dict[str, str]] = None,
+) -> str:
+    """
+    Browser/Pyodide entry point: parse a single student's CRS excerpt locally in memory,
+    run FECCheck + registration/clash/concession checks, and return strict JSON including
+    both local staff view and POPIA-anonymised markdown for external AI handoff.
+    """
+    fixed_text = ensure_crs_excerpt_parseable(raw_crs_excerpt)
+    with tempfile.NamedTemporaryFile("w", suffix=".csv", encoding="latin-1", delete=False) as tf:
+        tf.write(fixed_text)
+        tmp_name = tf.name
+    try:
+        records, _ = parsecrsinput(tmp_name)
+    finally:
+        if os.path.exists(tmp_name):
+            os.remove(tmp_name)
+
+    if not records:
+        return json.dumps({"error": "Could not parse student CRS record."})
+
+    target = apply_custom_overrides(
+        records[0],
+        as_program=as_program or None,
+        pass_courses=pass_courses or [],
+        fail_courses=fail_courses or [],
+        add_courses=add_courses or [],
+    )
+
+    orig_prog = str(target["sinfo"][3]).strip()
+    if orig_prog not in EEE_PROGS:
+        return json.dumps({
+            "error": f"Student is currently registered in non-EEE programme '{orig_prog}'. Select an EEE stream above (EB009, EB011, EB022, or ASPECT) to simulate internal transfer.",
+            "non_eee_program": orig_prog,
+        })
+
+    feco = FECCheck([target], phase=phase)
+    if not feco.stinfo:
+        return json.dumps({"error": "Student record contains no valid course entries."})
+
+    titles = course_titles or {}
+    strec = feco.stinfo[0]
+    srecp_df, _ = feco.getsrecp(strec["srec"])
+    passed_codes = set(srecp_df["course"].astype(str).tolist())
+
+    prop_clean = [c.strip().upper() for c in (propose_courses or []) if c.strip()]
+    audit = build_audit_dict(
+        feco,
+        strec,
+        course_titles=titles,
+        propose_courses=prop_clean,
+        include_full_history=True,
+    )
+    if "proposal_validation" not in audit:
+        audit["proposal_validation"] = evaluate_registration_proposal(
+            prop_clean,
+            passed_courses=passed_codes,
+            program_code=audit["profile"]["program_code"],
+            yfdreg=audit["profile"]["first_eee_reg"],
+        )
+
+    # Build candidate course suggestions (missing cores + stream electives)
+    candidates: List[Dict[str, Any]] = []
+    seen_cand: Set[str] = set()
+    for item in audit["certification"]["outstanding_cores"] + audit["certification"]["active_cores"]:
+        code = item["code"]
+        if code == "COMPSTUD" or code in seen_cand:
+            continue
+        seen_cand.add(code)
+        candidates.append({
+            "code": code,
+            "title": titles.get(code, item.get("title", code)),
+            "credits": COURSE_CREDITS.get(code, 16),
+            "category": "Core",
+            "note": item["status"],
+        })
+    for grp in audit["certification"]["necore"]:
+        for code in grp["options"]:
+            sat, _ = is_req_token_satisfied(code, passed_codes)
+            if not sat and code not in seen_cand:
+                seen_cand.add(code)
+                candidates.append({
+                    "code": code,
+                    "title": titles.get(code, code),
+                    "credits": COURSE_CREDITS.get(code, 16),
+                    "category": f"Specialist ({grp['id']})",
+                    "note": f"Need {grp['required_count']} from list",
+                })
+    for grp in audit["certification"]["cecore"]:
+        for code in grp["options"]:
+            sat, _ = is_req_token_satisfied(code, passed_codes)
+            if not sat and code not in seen_cand:
+                seen_cand.add(code)
+                candidates.append({
+                    "code": code,
+                    "title": titles.get(code, code),
+                    "credits": COURSE_CREDITS.get(code, 16),
+                    "category": "Elective (48cr basket)",
+                    "note": f"{grp['earned_credits']:.0f}/{grp['required_credits']} cr earned",
+                })
+
+    # Generate POPIA-anonymised markdown audit for 1-click AI handoff
+    anon_copy = json.loads(json.dumps(_clean_for_json(audit)))
+    anon_copy["profile"]["name"] = "[REDACTED]"
+    anon_copy["profile"]["campus_id"] = "STUDENT_ANON"
+    anon_copy["profile"]["empl_id"] = ""
+    anon_copy["data_source"] = "[REDACTED]"
+    anon_md = render_audit_markdown(anon_copy, student_mode=False)
+
+    return json.dumps(_clean_for_json({
+        "audit": audit,
+        "candidates": candidates,
+        "anonymized_markdown": anon_md,
+    }))
 
 
 if __name__ == "__main__":

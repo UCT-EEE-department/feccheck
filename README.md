@@ -24,9 +24,15 @@ The codebase is divided into three primary modules:
    - Defines core courses (`CORE`), elective courses by number (`NECORE`), and elective courses by credit total (`CECORE`).
    - Provides a comprehensive `COURSE_EQUIVALENCIES` list (e.g., mapping old course codes to new ones, or listing acceptable alternatives like `MAM1020F` vs `MAM1000W`).
 
-## Student Advising Prompts & Agent Skills
+## Student Advising Web App, Agent Skills & Prompts
 
-In addition to batch simulation, the codebase supports interactive advising via both Antigravity Agent Skills (code-backed, deterministic) and standalone Custom Gem / LLM prompts:
+In addition to batch simulation, the codebase supports interactive advising across three layers:
+
+### 1-Click Browser Advising & Registration App (`docs/` — GitHub Pages)
+* **Live URL**: `https://uct-eee-department.github.io/feccheck/` (enable **Settings → Pages → Source: GitHub Actions**).
+* Runs the exact Python `feccheck` engine (`program_defs.py`, `crs_parser.py`, `fec_check.py`, `advise_student.py`) **100% locally in the browser** via Pyodide (WebAssembly Python).
+* **OneDrive CRS Convention**: Staff select `OneDrive - University of Cape Town / EE Department / FEC / CURRENT_ADVISING_CRS.csv` once; it is cached locally in browser `IndexedDB` and never uploaded anywhere (POPIA-safe).
+* **SEAT Replacement & PeopleSoft Certificate**: Interactive 2026 course picker, prerequisite/corequisite/capstone checks, visual Sem 1 & Sem 2 timetable clash grids, printable Advisor-Certified Provisional Registration PDF for PeopleSoft attachment, and 1-click anonymised AI handoff.
 
 ### Antigravity Skills (`.agents/skills/`)
 * **[`staffadvisor`](.agents/skills/staffadvisor/SKILL.md)**: Staff-facing advising & FEC triage skill backed deterministically by `scripts/advise_student.py` (`fec_check.py`, `crs_parser.py`, `program_defs.py`, `query_timetable.py`, and `handbook/*.pdf`).

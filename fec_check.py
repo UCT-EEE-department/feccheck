@@ -2,8 +2,12 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any, List, Tuple, Union, Optional
 
-from openpyxl.comments import Comment
-from openpyxl.utils import get_column_letter        
+try:
+    from openpyxl.comments import Comment
+    from openpyxl.utils import get_column_letter
+except ImportError:
+    Comment = None  # type: ignore[assignment]
+    get_column_letter = None  # type: ignore[assignment]
 
 from program_defs import PROGRAM_SPECS, COURSE_EQUIVALENCIES
 from crs_parser import parsecrsinput

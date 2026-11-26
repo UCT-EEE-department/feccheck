@@ -1,0 +1,92 @@
+name: Deploy Advising Web App to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install minimal runtime dependencies (Pyodide parity: pandas + numpy only)
+        run: pip install pandas numpy
+
+      - name: Smoke test Pyodide entry points & POPIA redaction
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+          sys.path.insert(0, ".")
+          sys.path.insert(0, ".agents/skills/staffadvisor/scripts")
+          import advise_student
+
+          meta = json.loads(advise_student.get_catalog_metadata())
+          assert len(meta["courses"]) > 30, "Expected course catalog"
+
+          synthetic_crs = "\n".join([
+              "DOE,JANE,ABCDEF001,1234567,EB009",
+              "2025,1,EB009,BSc(Eng) Electrical,1,CONT,,,,,,,,0,96,96,68.0,68.0,68.0",
+              "MAM1020F,2025,Mathematics IA,18,72,PA,18,18,EEE1008F,2025,Intro to Elec Eng,16,46S,FS,0,16",
+              ",Passed:,,,,"
+          ])
+          res = json.loads(advise_student.run_browser_audit(
+              synthetic_crs,
+              pass_courses=["EEE1008F"],
+              propose_courses=["EEE2045F", "EEE2046F"],
+          ))
+          assert "error" not in res, res
+          assert res["audit"]["profile"]["program_code"] == "EB009"
+          assert "ABCDEF001" not in res["anonymized_markdown"], "Campus ID leaked into anonymised markdown!"
+          assert "DOE" not in res["anonymized_markdown"], "Student surname leaked into anonymised markdown!"
+          print("Smoke test passed cleanly.")
+          EOF
+
+      - name: Assemble static _site bundle
+        run: |
+          rm -rf _site
+          mkdir -p _site/py
+          cp docs/index.html docs/app.js docs/styles.css _site/
+          cp program_defs.py crs_parser.py fec_check.py timetable_schedule.json uct_ee_staffadvisor.md _site/py/
+          cp .agents/skills/staffadvisor/scripts/advise_student.py _site/py/advise_student.py
+
+      - name: Hard POPIA CI Gate (block any student data files)
+        run: |
+          FOUND=$(find _site -type f \( -iname "*.csv" -o -iname "*.xlsx" -o -iname "*.xls" -o -iname "*.tsv" \))
+          if [ -n "$FOUND" ]; then
+            echo "CRITICAL POPIA VIOLATION: Tabular data file found in _site:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "POPIA check passed: zero tabular/CRS files in _site."
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "_site"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
