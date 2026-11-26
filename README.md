@@ -24,10 +24,15 @@ The codebase is divided into three primary modules:
    - Defines core courses (`CORE`), elective courses by number (`NECORE`), and elective courses by credit total (`CECORE`).
    - Provides a comprehensive `COURSE_EQUIVALENCIES` list (e.g., mapping old course codes to new ones, or listing acceptable alternatives like `MAM1020F` vs `MAM1000W`).
 
-## Student Advising Prompts
+## Student Advising Prompts & Agent Skills
 
-In addition to batch simulation, the codebase supports interactive advising using AI LLMs. The prompts and guides are located in the following files:
+In addition to batch simulation, the codebase supports interactive advising via both Antigravity Agent Skills (code-backed, deterministic) and standalone Custom Gem / LLM prompts:
 
+### Antigravity Skills (`.agents/skills/`)
+* **[`staffadvisor`](.agents/skills/staffadvisor/SKILL.md)**: Staff-facing advising & FEC triage skill backed deterministically by `scripts/advise_student.py` (`fec_check.py`, `crs_parser.py`, `program_defs.py`, `query_timetable.py`, and `handbook/*.pdf`).
+* **[`studentadvisor`](.agents/skills/studentadvisor/SKILL.md)**: Student-facing advising skill enforcing second-person empathetic guidance, prominent EBE Handbook/FEC non-official disclaimers, and `--student-mode` single-student privacy guardrails.
+
+### Standalone Web / Custom Gem System Prompts
 * **[uct_ee_staffadvisor.md](uct_ee_staffadvisor.md)**: System prompt for a custom GPT/Gemini to prime a session to help staff advisors provide curriculum advice to students.
 * **[uct_ee_studentadvisor.md](uct_ee_studentadvisor.md)**: A student-facing equivalent of the staff advising prompt. It presents itself as a supportive, empathetic assistant directly addressing the student and includes a disclaimer that the information generated is not official or definitive.
 * **[uct_ee_genadvisors.md](uct_ee_genadvisors.md)**: Prompt/instructions for developer agents to regenerate or align the staff-facing and student-facing system prompts when the underlying curriculum rules in Python change.

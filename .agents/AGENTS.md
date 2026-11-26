@@ -47,11 +47,16 @@ The data flows through the system primarily as a list of dictionaries called `st
 6. **QUAS for Practical Training**: If a student is *only* missing the 0-credit core courses `EEE1000X` and/or `EEE3000X` but has met all other academic requirements and credits, they are coded as **`QUAS`** with the message `"Outstanding Practical Training"` instead of being subjected to normal credit-based exclusion limits.
 7. **Explanatory Comments Column**: The Excel spreadsheets include a trailing `comments` column showing the curriculum spec year applied to the student and a trace of all across-variant course equivalencies used.
 
-## 6. Student Advising Workflow & Priming
-In addition to the batch FEC simulations run via Python, the system supports interactive student advising via Gemini:
+## 6. Student Advising Skills & Prompt Priming
+In addition to batch FEC simulations run via Python, the project provides two AI advising layers:
 
-1. **[uct_stadvisor.md](file:///Users/nicolls/proj/eleceng/feccheck/uct_stadvisor.md)**: A comprehensive, detailed system prompt for an LLM that serves as the instruction set for a Custom Gem or primed chat. It instructs the AI on how to interpret CRS dumps, check requirements, compute academic standing, and recommend registrations.
-2. **[advising_workflow_guide.md](file:///Users/nicolls/proj/eleceng/feccheck/advising_workflow_guide.md)**: Guide for EEE advisors explaining how to setup the Custom Gem and conduct daily advising workflow.
-3. **[gen_uct_stdadvisor.md](file:///Users/nicolls/proj/eleceng/feccheck/gen_uct_stdadvisor.md)**: Developer specifications detailing how to regenerate/update `uct_stadvisor.md` from the Python source-of-truth logic when rules change.
+### A. Antigravity Agent Skills (`.agents/skills/`)
+1. **[`staffadvisor`](file:///Users/nicolls/proj/eleceng/feccheck/.agents/skills/staffadvisor/SKILL.md)**: Assists human Student Advisors and FEC members. Uses `.agents/skills/staffadvisor/scripts/advise_student.py` to execute deterministic `FECCheck` audits, prerequisite/corequisite checks, 2026 timetable clash detection, and cohort FEC triage.
+2. **[`studentadvisor`](file:///Users/nicolls/proj/eleceng/feccheck/.agents/skills/studentadvisor/SKILL.md)**: Advises undergraduate students directly in second-person ("you") with mandatory EBE Handbook/FEC non-official disclaimers and `--student-mode` privacy enforcement.
 
-**Alignment Requirement**: The LLM prompt in `uct_stadvisor.md` must be kept perfectly in sync with the logic in `program_defs.py` and `fec_check.py` to prevent advising discrepancy.
+### B. Standalone Web Chat / Custom Gem Prompts
+1. **[uct_ee_staffadvisor.md](file:///Users/nicolls/proj/eleceng/feccheck/uct_ee_staffadvisor.md)** & **[uct_ee_studentadvisor.md](file:///Users/nicolls/proj/eleceng/feccheck/uct_ee_studentadvisor.md)**: Self-contained system prompts for Gemini Gems / web chats without Python execution.
+2. **[advising_workflow_guide.md](file:///Users/nicolls/proj/eleceng/feccheck/advising_workflow_guide.md)**: Guide for EEE advisors explaining Custom Gem setup and daily workflow.
+3. **[uct_ee_genadvisors.md](file:///Users/nicolls/proj/eleceng/feccheck/uct_ee_genadvisors.md)**: Developer instructions for regenerating the standalone `.md` prompts when Python rules change.
+
+**Alignment Requirement**: Both the `.agents/skills/*/references/` manuals and the standalone `uct_ee_*advisor.md` prompts must stay aligned with `program_defs.py` and `fec_check.py`.
