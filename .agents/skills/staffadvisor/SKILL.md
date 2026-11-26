@@ -37,10 +37,10 @@ Never eyeball credit totals, course equivalencies, prerequisite chains, or timet
 
 Run [advise_student.py](./scripts/advise_student.py) from the terminal before drafting any advising report:
 
-1. **Lookup by Campus ID or Name in Workspace CRS CSVs** (auto-discovers newest CRS dump, or pass `--crs <csv>` and optional `--updates <xlsx>`):
+1. **Lookup by Campus ID or Name in Workspace CRS CSVs** (auto-discovers newest CRS dump, or pass `--crs <csv>` and optional `--updates <xlsx>`; append `--anonymize` to redact Name, Campus ID, and Empl ID from output):
    ```bash
-   python3 .agents/skills/staffadvisor/scripts/advise_student.py --id ABCDEF001
-   python3 .agents/skills/staffadvisor/scripts/advise_student.py --name "Surname" --crs "<path-to-crs-dump.csv>"
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --id ABCDEF001 --anonymize
+   python3 .agents/skills/staffadvisor/scripts/advise_student.py --name "Surname" --crs "<path-to-crs-dump.csv>" --anonymize
    ```
 2. **Audit a Pasted CRS Excerpt** (write snippet to scratch file; missing `,Passed:` footers are repaired automatically):
    ```bash

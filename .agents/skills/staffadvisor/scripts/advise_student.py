@@ -1100,6 +1100,7 @@ def main() -> None:
     parser.add_argument("--only-aa", action="store_true", help="In --cohort-summary, show only students eligible for Additional Assessment.")
     parser.add_argument("--full-history", action="store_true", help="Include full multi-year srec list in JSON output.")
     parser.add_argument("--student-mode", action="store_true", help="Enforce single-student privacy guardrails and student disclaimer.")
+    parser.add_argument("--anonymize", action="store_true", help="Redact student name, Campus ID, and Empl ID from all outputs (POPIA-safe).")
     parser.add_argument("--format", choices=["markdown", "json"], default="markdown", help="Output format (default: markdown).")
 
     args = parser.parse_args()
@@ -1146,9 +1147,10 @@ def main() -> None:
             if filter_codes and code not in filter_codes and pcres["eoy_exam_code"] not in filter_codes and pcres["cleanup_code"] not in filter_codes:
                 continue
             if filter_codes or args.only_aa:
+                idx = len(matched_rows) + 1
                 matched_rows.append({
-                    "campus_id": s["sinfo"][1],
-                    "name": s["sinfo"][0],
+                    "campus_id": f"ANON_{idx:03d}" if args.anonymize else s["sinfo"][1],
+                    "name": "[REDACTED]" if args.anonymize else s["sinfo"][0],
                     "program": s["sinfo"][3],
                     "pc": code,
                     "pmess": pcres["pmess"],
@@ -1237,8 +1239,9 @@ def main() -> None:
 
     if len(matched_records) > 1 and not args.campus_id:
         print(f"Multiple students matched ({len(matched_records)}). Re-run with --id <CAMPUS_ID>:")
-        for r in matched_records[:25]:
-            print(f"  - {r['sinfo'][1]}: {r['sinfo'][0]} ({r['sinfo'][3]})")
+        if not args.anonymize:
+            for r in matched_records[:25]:
+                print(f"  - {r['sinfo'][1]}: {r['sinfo'][0]} ({r['sinfo'][3]})")
         sys.exit(0)
 
     target = apply_custom_overrides(
@@ -1250,8 +1253,9 @@ def main() -> None:
     )
 
     if target["sinfo"][3] not in EEE_PROGS:
+        label = "STUDENT_ANON" if args.anonymize else target["sinfo"][1]
         sys.exit(
-            f"Student {target['sinfo'][1]} is currently in non-EEE program '{target['sinfo'][3]}'. "
+            f"Student {label} is currently in non-EEE program '{target['sinfo'][3]}'. "
             "Pass --as-program EB009 (or EB011 / EB022 / EB809 / EB811 / EB822) to simulate transfer into EEE."
         )
 
@@ -1267,7 +1271,11 @@ def main() -> None:
         propose_courses=propose_list,
         include_full_history=args.full_history,
     )
-    audit["data_source"] = source_label
+    audit["data_source"] = "[REDACTED]" if args.anonymize else source_label
+    if args.anonymize:
+        audit["profile"]["name"] = "[REDACTED]"
+        audit["profile"]["campus_id"] = "STUDENT_ANON"
+        audit["profile"]["empl_id"] = ""
 
     if args.format == "json":
         print(json.dumps(audit, indent=2))
