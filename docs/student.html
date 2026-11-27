@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNSEAT Student Planner — UCT Electrical Engineering</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+</head>
+<body>
+  <header class="topbar no-print" style="background:#0f4c5c;">
+    <div>
+      <h1>UNSEAT Student Planner <span style="font-weight:400; font-size:0.95rem; opacity:0.92;">— UCT Electrical Engineering</span></h1>
+      <div class="sub">Self-Service Degree Audit • Prerequisite &amp; 2026 Timetable Clash Checker • Advisor Prep Sheet</div>
+    </div>
+    <div class="status-pills">
+      <a href="./index.html" class="pill" style="text-decoration:none; border:1px solid rgba(255,255,255,0.4);">Staff Advisor Tool</a>
+      <span class="pill warn" id="engineStatus">Loading Planner Engine…</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Mandatory Non-Official Student Disclaimer -->
+    <div class="banner warn no-print" style="margin-top:0; margin-bottom:1rem;">
+      <strong>Planning Aid Only — Not Official Faculty Advice:</strong>
+      This tool helps you track your UCT EEE curriculum and check prerequisites and timetable clashes, but it is <strong>not</strong> an official University record. Official progression, readmission, concession, and graduation decisions rest solely with the <strong>EBE Faculty Examinations Committee (FEC)</strong>, the official <strong>EBE Undergraduate Handbook</strong>, and <strong>PeopleSoft</strong>. Always confirm concessions or borderline standing with an official UCT EEE Academic Advisor.
+      <span style="display:block; margin-top:0.25rem; font-size:0.8rem;">Privacy: Everything runs 100% locally in your own browser—nothing is uploaded to any server.</span>
+    </div>
+
+    <!-- Profile Bar -->
+    <section class="card no-print">
+      <div class="controls-row">
+        <label><strong>Your Stream:</strong>
+          <select id="stuProgSelect" onchange="onProfileChanged()">
+            <option value="EB009">EB009 — Electrical Engineering</option>
+            <option value="EB011">EB011 — Mechatronics</option>
+            <option value="EB022">EB022 — Electrical &amp; Computer Eng</option>
+            <option value="EB809">EB809 — Electrical Eng (ASPECT 5-yr)</option>
+            <option value="EB811">EB811 — Mechatronics (ASPECT 5-yr)</option>
+            <option value="EB822">EB822 — Elec &amp; Comp Eng (ASPECT 5-yr)</option>
+          </select>
+        </label>
+        <label><strong>Year Started EEE:</strong>
+          <select id="stuStartYr" onchange="onProfileChanged()">
+            <option value="2026">2026</option>
+            <option value="2025" selected>2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2021">2021</option>
+            <option value="2020">2020</option>
+          </select>
+        </label>
+        <label><strong>Most Recent Study Year:</strong>
+          <select id="stuCurrYr" onchange="saveStudentState(); runPlanner();">
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+          </select>
+        </label>
+        <label><strong>Approx. Cumulative GPA (%):</strong>
+          <input type="text" id="stuGpaInput" value="65" style="width:70px;" oninput="saveStudentState(); runPlanner();" />
+        </label>
+        <button class="secondary small" style="margin-left:auto;" onclick="resetAllStudentData()">Reset All</button>
+      </div>
+      <div id="stuErrorBanner" class="banner err" style="display:none;"></div>
+    </section>
+
+    <nav class="tabs no-print">
+      <button class="tab-btn active" data-tab="tab-courses" onclick="switchTab('tab-courses')">1. Enter Your Courses</button>
+      <button class="tab-btn" data-tab="tab-progress" onclick="switchTab('tab-progress')">2. Your Degree Progress &amp; Standing</button>
+      <button class="tab-btn" data-tab="tab-plan" onclick="switchTab('tab-plan')">3. Plan Next Registration &amp; Clashes</button>
+      <button class="tab-btn" data-tab="tab-share" onclick="switchTab('tab-share')">4. Advisor Draft &amp; Free AI Helper</button>
+    </nav>
+
+    <!-- TAB 1: Enter Courses (Checklist + Paste Transcript) -->
+    <section id="tab-courses" class="tab-panel active">
+      <div class="card">
+        <details id="pasteDetails">
+          <summary style="cursor:pointer; font-weight:700; color:#0f4c5c;">
+            Fast Import: Paste Text from Your PeopleSoft Unofficial Transcript (Optional)
+          </summary>
+          <p style="font-size:0.85rem; color:#475569; margin:0.5rem 0;">
+            Open your UCT PeopleSoft Unofficial Transcript PDF, select &amp; copy the text, and paste it below. We will extract your course codes, years, and pass/supp/fail statuses locally in your browser (any personal details are ignored).
+          </p>
+          <textarea id="pasteTranscriptBox" rows="5" style="width:100%;" placeholder="Paste PeopleSoft transcript text or CRS course lines here…"></textarea>
+          <div class="controls-row" style="margin-top:0.5rem;">
+            <button class="primary small" onclick="importFromPastedText()">Import Courses from Text</button>
+            <span id="importStatusMsg" style="font-size:0.84rem; font-weight:600; color:#15803d;"></span>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+          <h2 style="margin:0;">Tick Courses You Have Taken</h2>
+          <button class="primary small" onclick="switchTab('tab-progress')">View My Degree Audit →</button>
+        </div>
+        <p style="font-size:0.85rem; color:#475569; margin-top:0;">
+          Set each course you've completed to <strong>Passed (Prior Yr)</strong> or <strong>Passed (This Yr)</strong>, or mark current supplementary/failed courses to see how they affect your standing.
+        </p>
+
+        <div id="checklistContainer">Loading curriculum checklist…</div>
+
+        <div style="margin-top:1rem; padding-top:0.85rem; border-top:1px solid #cbd5e1;">
+          <h3>Complementary Studies &amp; Equivalent / Transfer Courses</h3>
+          <div class="controls-row" style="margin-bottom:0.6rem;">
+            <label style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.88rem;">
+              <input type="checkbox" id="compstudPassedCheck" onchange="toggleCompstudPassed()" />
+              <strong>I have passed an ECSA-valid Complementary Studies breadth course</strong> (Humanities / Economics / Management / Law — note: <code>STA</code> and <code>CSC</code> courses do <em>not</em> count)
+            </label>
+          </div>
+          <div class="controls-row">
+            <input type="text" id="extraPassedInput" list="allCoursesDatalist" placeholder="Add older/equivalent passed code (e.g. MAM1000W, EEE1006F)" style="min-width:280px;" />
+            <datalist id="allCoursesDatalist"></datalist>
+            <button class="secondary small" onclick="addExtraCourse()">Add Passed Course</button>
+          </div>
+          <div id="extraCoursesPills" style="margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Degree Progress & Standing -->
+    <section id="tab-progress" class="tab-panel">
+      <div class="card">
+        <div id="stuStandingHeader"></div>
+        <div class="standing-grid" id="stuStandingStats"></div>
+        <div id="stuStandingBanners"></div>
+      </div>
+
+      <div class="card">
+        <h2>Your Degree Checklist (Core &amp; Electives)</h2>
+        <div id="stuDegreeChecklist"></div>
+      </div>
+
+      <div class="card" id="stuScenariosCard">
+        <h2>What-If Progression Scenarios</h2>
+        <div id="stuScenariosTable"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: Plan Next Registration & Timetable Clashes -->
+    <section id="tab-plan" class="tab-panel">
+      <div class="two-col">
+        <div class="card">
+          <h2>Choose Courses for Next Year</h2>
+          <div class="controls-row" style="margin-bottom:0.6rem;">
+            <button class="primary small" onclick="autoPickStudentCores()">Auto-Pick Eligible Cores</button>
+            <button class="secondary small" onclick="clearStudentProposed()">Clear Selection</button>
+          </div>
+          <div class="cand-list" id="stuCandidateList"></div>
+
+          <h3 style="margin-top:0.9rem;">Add Any Course Code</h3>
+          <div class="controls-row">
+            <input type="text" id="stuCustomPropInput" list="allCoursesDatalist" placeholder="e.g. EEE3088F or HUB4049F" style="min-width:170px; flex:1;" />
+            <button class="secondary" onclick="addStudentCustomProp()">Add</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h2>Your Proposed Load &amp; Eligibility Check</h2>
+            <div id="stuCreditMeter"></div>
+            <div id="stuProposalTable"></div>
+          </div>
+
+          <div class="card">
+            <h2>2026 Timetable Grid &amp; Clash Check</h2>
+            <div id="stuClashBanner"></div>
+            <h3>Semester 1 (<code>F</code>)</h3>
+            <div id="stuTtSem1"></div>
+            <h3>Semester 2 (<code>S</code> / <code>C</code>)</h3>
+            <div id="stuTtSem2"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: Share Draft With Advisor & Free AI Helper -->
+    <section id="tab-share" class="tab-panel">
+      <div class="card no-print">
+        <h2>Prepare Your Advising Sheet <span style="font-weight:400; font-size:0.82rem; color:#475569;">(Local-only — never uploaded)</span></h2>
+        <div class="controls-row" style="margin-bottom:0.6rem;">
+          <input type="text" id="stuNameInput" placeholder="Your Name (optional, for PDF printout)" oninput="renderStudentDraftSheet()" style="min-width:220px;" />
+          <input type="text" id="stuCidInput" placeholder="Campus ID (optional, for PDF printout)" oninput="renderStudentDraftSheet()" style="min-width:180px;" />
+          <label style="font-size:0.84rem;">Planning For Year:
+            <select id="stuPlanYear" onchange="renderStudentDraftSheet()">
+              <option value="2026">2026</option>
+              <option value="2027" selected>2027</option>
+            </select>
+          </label>
+        </div>
+        <textarea id="stuNotesInput" rows="2" style="width:100%;" placeholder="Questions or concession requests to discuss with your EEE Academic Advisor…" oninput="renderStudentDraftSheet()"></textarea>
+        <div class="controls-row" style="margin-top:0.65rem;">
+          <button class="primary" onclick="window.print()">Print / Save PDF Draft for Your Advisor</button>
+          <button class="secondary" onclick="copyStudentSummaryForAdvisor()">Copy Text Summary to Email Advisor</button>
+          <span id="stuDraftCopyMsg" style="color:#15803d; font-weight:600;"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cert-sheet" id="certificatePreview" style="border-color:#0f4c5c;"></div>
+      </div>
+
+      <div class="card no-print">
+        <h2>Ask a Free AI Study &amp; Curriculum Assistant</h2>
+        <p style="font-size:0.86rem; color:#475569; margin-top:0;">
+          Copies the UCT EEE Student Advisor guide plus your anonymised degree &amp; timetable check above (no name or Campus ID included) so you can ask follow-up "what-if" questions in any free AI chat:
+        </p>
+        <div style="margin-bottom:0.65rem;">
+          <input type="text" id="stuAiQuestion" style="width:100%;" placeholder="Optional question, e.g. Which electives best suit embedded systems, and am I on track for Honours?" />
+        </div>
+        <div class="controls-row" style="margin-bottom:0.75rem;">
+          <button class="primary" onclick="copyStudentAiPrompt()">1. Copy Student Advisor Prompt + My Degree Audit</button>
+          <span id="stuAiCopyMsg" style="color:#15803d; font-weight:700;"></span>
+        </div>
+        <div class="controls-row">
+          <a class="btn-link secondary" href="https://copilot.microsoft.com/" target="_blank" rel="noopener">Open Microsoft Copilot (UCT Login)</a>
+          <a class="btn-link secondary" href="https://chatgpt.com/" target="_blank" rel="noopener">Open ChatGPT (Free)</a>
+          <a class="btn-link secondary" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude (Free)</a>
+          <a class="btn-link secondary" href="https://gemini.google.com/app" target="_blank" rel="noopener">Open Google Gemini (Free)</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./student.js"></script>
+</body>
+</html>

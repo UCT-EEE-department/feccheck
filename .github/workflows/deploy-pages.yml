@@ -58,6 +58,21 @@ jobs:
           assert res["audit"]["profile"]["program_code"] == "EB009"
           assert "ABCDEF001" not in res["anonymized_markdown"], "Campus ID leaked into anonymised markdown!"
           assert "DOE" not in res["anonymized_markdown"], "Student surname leaked into anonymised markdown!"
+
+          chk = json.loads(advise_student.get_student_program_checklist("EB022", 2025))
+          assert len(chk["groups"]["year1"]) > 5
+          parsed_ps = json.loads(advise_student.parse_pasted_student_text("EB022 2025 MAM1020F 74 PA EEE1008F 61 PA"))
+          assert parsed_ps["program"] == "EB022" and len(parsed_ps["courses"]) == 2
+          stu_res = json.loads(advise_student.run_student_planner_audit(json.dumps({
+              "program": "EB022",
+              "first_eee_reg": 2025,
+              "current_year": 2025,
+              "gpa": 67.5,
+              "courses": parsed_ps["courses"],
+              "propose_courses": ["EEE2045F", "EEE2046F"],
+          })))
+          assert not stu_res["empty_record"]
+          assert "Non-Official Planning Aid" in stu_res["student_markdown"]
           print("Smoke test passed cleanly.")
           EOF
 
@@ -65,8 +80,8 @@ jobs:
         run: |
           rm -rf _site
           mkdir -p _site/py
-          cp docs/index.html docs/app.js docs/styles.css _site/
-          cp program_defs.py crs_parser.py fec_check.py timetable_schedule.json uct_ee_staffadvisor.md _site/py/
+          cp docs/index.html docs/app.js docs/student.html docs/student.js docs/styles.css _site/
+          cp program_defs.py crs_parser.py fec_check.py timetable_schedule.json uct_ee_staffadvisor.md uct_ee_studentadvisor.md _site/py/
           cp .agents/skills/staffadvisor/scripts/advise_student.py _site/py/advise_student.py
 
       - name: "Hard POPIA CI Gate"

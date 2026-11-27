@@ -1337,8 +1337,101 @@ def _clean_for_json(obj: Any) -> Any:
     return obj
 
 
+STATIC_COURSE_TITLES: Dict[str, str] = {
+    "ASL1200S": "Africa: Culture, ID & Glblsn",
+    "AXL1200S": "Africa: Culture, ID & Glblsn",
+    "AXL1301S": "Sociolinguistics",
+    "CML4607F": "Law for Engineers",
+    "CML4607Z": "Law for Engineers",
+    "COMPSTUD": "Complementary Studies Elective",
+    "CON2026S": "Project Management",
+    "CSC1015F": "Computer Science 1015",
+    "CSC1015S": "Computer Science 1015",
+    "CSC1016S": "Computer Science 1016",
+    "CSC2001F": "Computer Science 2001",
+    "CSC2002S": "Computer Science 2002",
+    "CSC3002F": "Computer Science 3002",
+    "CSC3003S": "Computer Science 3003",
+    "CSC3021F": "Concurrent Programming",
+    "CSC3022F": "C++ and Machine Learning",
+    "CSC3022H": "C++ and Machine Learning",
+    "CSC3023F": "Computer Systems",
+    "EEE1000X": "Practical Training I",
+    "EEE1006F": "Intro Electronic Engineering",
+    "EEE1007S": "Intro Electrical Engineering",
+    "EEE1008F": "Electrical Engineering A",
+    "EEE1009S": "Electrical Engineering B",
+    "EEE2044S": "Introduction to Power Eng",
+    "EEE2045F": "Analogue Electronics",
+    "EEE2046F": "Embedded Systems I",
+    "EEE2046S": "Embedded Systems I",
+    "EEE2047S": "Signals and Systems I",
+    "EEE2048F": "Prof Comm for Elec Eng",
+    "EEE2048S": "Prof Comm for Elec Eng",
+    "EEE2051L": "Embedded Systems Lab",
+    "EEE3000X": "Practical Training II",
+    "EEE3088F": "Design Principles",
+    "EEE3089F": "Electromagnetic Engineering",
+    "EEE3090F": "Electronic Devices & Circuits",
+    "EEE3091F": "Energy Conversion I",
+    "EEE3092F": "Signals & Systems II",
+    "EEE3093S": "Communication and Network Eng",
+    "EEE3094S": "Control Systems Engineering",
+    "EEE3096S": "Embedded Systems II",
+    "EEE3097S": "Engineering Design: ECE",
+    "EEE3098S": "Engineering Design: EE",
+    "EEE3099S": "Engineering Design: ME",
+    "EEE3100S": "Energy Systems and Grids I",
+    "EEE4006C": "Professional Communication",
+    "EEE4022F": "Research Project",
+    "EEE4022S": "Research Project",
+    "EEE4051C": "New Venture Planning",
+    "EEE4113F": "Engineering Systems Design",
+    "EEE4114F": "Digital Signal Processing",
+    "EEE4117F": "Energy Conversion II",
+    "EEE4118F": "Control and Instrumentation",
+    "EEE4119F": "Mechatronics",
+    "EEE4120F": "Digital Systems",
+    "EEE4121F": "Mobile and Wireless Networks",
+    "EEE4123C": "Electrical Machines and Drives",
+    "EEE4124C": "Impact of Engineering",
+    "EEE4125C": "New Venture Planning & Prof Practice",
+    "EEE4126F": "Energy Systems & Grids II",
+    "END1019L": "Social Infrastructures",
+    "HUB2005F": "Intro to Medical Engineering",
+    "HUB4045F": "Intro Med Imaging & Processing",
+    "HUB4049F": "Medical Imaging Fundamentals",
+    "MAM1000W": "Mathematics 1000",
+    "MAM1020F": "Mathematics 1A for Engineers",
+    "MAM1020S": "Mathematics 1A for Engineers",
+    "MAM1021F": "Mathematics 1B for Engineers",
+    "MAM1021S": "Mathematics 1B for Engineers",
+    "MAM1023F": "Maths 1A Engineers Extended",
+    "MAM1024S": "Maths 1B Engineers Extended",
+    "MAM2083F": "Vector Calculus for Engineers",
+    "MAM2083S": "Vector Calculus for Engineers",
+    "MAM2084F": "Linear Alg & DE for Engineers",
+    "MAM2084S": "Linear Alg & DE for Engineers",
+    "MAM2085F": "Vector Calculus for ASPECT",
+    "MEC1003F": "Engineering Drawing",
+    "MEC1009F": "Intro to Engineering Mechanics",
+    "MEC1009S": "Intro to Engineering Mechanics",
+    "MEC2026S": "Project Management",
+    "MEC2045S": "Applied Engineering Mechanics",
+    "MEC2047F": "Engineering Dynamics",
+    "MEC4063C": "Industrial Ecology",
+    "PHY1012F": "Physics A for Engineers",
+    "PHY1012S": "Physics A for Engineers",
+    "PHY1013F": "Physics B for Engineers",
+    "PHY1013S": "Physics B for Engineers",
+    "PHY1014F": "Physics A for ASPECT",
+    "PHY1015S": "Physics B for ASPECT",
+    "PHY2010S": "Electromagnetism for Engineers",
+}
+
+
 def get_catalog_metadata() -> str:
-    """Return JSON catalog of courses, credits, programmes, and 2026 timetable grids for browser UI."""
+    """Return JSON catalog of courses, titles, credits, programmes, and 2026 timetable grids for browser UI."""
     all_courses: Set[str] = set(COURSE_CREDITS.keys())
     for pg in PROGRAM_SPECS:
         for c in pg.get("core", []):
@@ -1355,11 +1448,16 @@ def get_catalog_metadata() -> str:
                     all_courses.add(tok.replace("_P", "").upper())
 
     catalog = [
-        {"code": c, "credits": COURSE_CREDITS.get(c, 16)}
+        {
+            "code": c,
+            "credits": COURSE_CREDITS.get(c, 16),
+            "title": STATIC_COURSE_TITLES.get(c, c),
+        }
         for c in sorted(all_courses)
     ]
     return json.dumps({
         "courses": catalog,
+        "titles": STATIC_COURSE_TITLES,
         "programs": PROG_DESCRIPTIONS,
         "period_labels": PERIOD_LABELS,
         "day_labels": DAY_LABELS,
@@ -1488,6 +1586,333 @@ def run_browser_audit(
         "audit": audit,
         "candidates": candidates,
         "anonymized_markdown": anon_md,
+    }))
+
+
+# ---------------------------------------------------------------------------
+# Student Self-Service Planner Helpers (UNSEAT Student Mode)
+# ---------------------------------------------------------------------------
+
+_YR1_SET = {
+    "CSC1015F", "EEE1006F", "EEE1008F", "MAM1020F", "MEC1003F", "PHY1012F",
+    "CSC1016S", "EEE1007S", "EEE1009S", "MAM1021S", "PHY1013S", "EEE1000X",
+}
+_YR2_SET = {
+    "EEE2045F", "EEE2046F", "EEE2048F", "EEE2048S", "MAM2083F", "MEC1009F",
+    "EEE2044S", "EEE2047S", "MAM2084S", "PHY2010S", "ASL1200S", "AXL1200S",
+}
+_YR4_SET = {
+    "EEE4113F", "CML4607F", "EEE4125C", "EEE4124C", "EEE4022S", "EEE4022F",
+}
+
+
+def get_student_program_checklist(program_code: str, first_eee_reg: int) -> str:
+    """Return grouped Year 1-4 Core & Elective checklist for the selected EEE stream and entry year."""
+    prog = (program_code or "EB009").strip().upper()
+    std_prog = prog[:2] + "0" + prog[3:] if len(prog) == 5 else "EB009"
+    yfdreg = int(first_eee_reg or 2025)
+    matches = [
+        p for p in PROGRAM_SPECS
+        if p["code"] == std_prog and p["start_year"] <= yfdreg <= p["end_year"]
+    ] or [p for p in PROGRAM_SPECS if p["code"] == std_prog]
+    spec = matches[0] if matches else PROGRAM_SPECS[0]
+
+    def _item(code: str) -> Dict[str, Any]:
+        return {
+            "code": code,
+            "title": STATIC_COURSE_TITLES.get(code, code),
+            "credits": COURSE_CREDITS.get(code, 16),
+        }
+
+    groups = {"year1": [], "year2": [], "year3": [], "year4": [], "electives": []}
+    for c in spec.get("core", []):
+        if c == "COMPSTUD":
+            # Represent COMPSTUD via an ECSA-valid breadth placeholder option (AXL1301S / custom)
+            continue
+        if c in _YR1_SET:
+            groups["year1"].append(_item(c))
+        elif c in _YR2_SET:
+            groups["year2"].append(_item(c))
+        elif c in _YR4_SET:
+            groups["year4"].append(_item(c))
+        else:
+            groups["year3"].append(_item(c))
+
+    seen_elec: Set[str] = set()
+    for grp in spec.get("necore", []) + spec.get("cecore", []):
+        for c in grp[1:]:
+            if c not in seen_elec:
+                seen_elec.add(c)
+                groups["electives"].append(_item(c))
+
+    return json.dumps({
+        "program_code": prog,
+        "first_eee_reg": yfdreg,
+        "required_credits": 560 if yfdreg >= 2025 else 576,
+        "has_compstud_core": "COMPSTUD" in spec.get("core", []),
+        "groups": groups,
+    })
+
+
+def parse_pasted_student_text(
+    raw_text: str,
+    default_program: str = "EB009",
+    default_start_year: int = 2025,
+    default_gpa: float = 65.0,
+) -> str:
+    """
+    Parse either a pasted single-student CRS excerpt OR free-form text copied from a
+    UCT PeopleSoft unofficial transcript PDF/page into a clean student course list.
+    """
+    text = (raw_text or "").strip()
+    if not text:
+        return json.dumps({"error": "No transcript text provided."})
+
+    # 1. Try CRS parser first if it looks like comma-separated CRS output
+    if "," in text and re.search(r"\b(EB009|EB809|EB011|EB811|EB022|EB822|[A-Z]{6}[0-9]{3})\b", text):
+        try:
+            fixed = ensure_crs_excerpt_parseable(text)
+            with tempfile.NamedTemporaryFile("w", suffix=".csv", encoding="latin-1", delete=False) as tf:
+                tf.write(fixed)
+                tmp_name = tf.name
+            try:
+                recs, _ = parsecrsinput(tmp_name)
+            finally:
+                if os.path.exists(tmp_name):
+                    os.remove(tmp_name)
+            if recs and not recs[0]["srec"].empty:
+                r0 = recs[0]
+                prog = str(r0["sinfo"][3]).strip().upper()
+                if prog not in EEE_PROGS:
+                    prog = default_program
+                ys = r0["ystats"]
+                eee_ys = ys[ys["preg"].isin(EEE_PROGS)] if not ys.empty else ys
+                start_yr = int(eee_ys["yr"].min()) if not eee_ys.empty else default_start_year
+                curr_yr = int(ys["yr"].max()) if not ys.empty else max(start_yr, 2026)
+                gpa_val = float(ys["Cum"].dropna().iloc[-1]) if (not ys.empty and not ys["Cum"].dropna().empty) else default_gpa
+                parsed_courses = []
+                for _, row in r0["srec"].iterrows():
+                    parsed_courses.append({
+                        "course": str(row["course"]).strip().upper(),
+                        "yt": int(row["yt"]),
+                        "perc": str(row["perc"]).strip(),
+                        "symbol": str(row["symbol"]).strip(),
+                    })
+                return json.dumps(_clean_for_json({
+                    "program": prog,
+                    "first_eee_reg": start_yr,
+                    "current_year": curr_yr,
+                    "gpa": round(gpa_val, 2),
+                    "courses": parsed_courses,
+                }))
+        except Exception:
+            pass
+
+    # 2. Fallback: Regex extraction for PeopleSoft Unofficial Transcript / free-form course text
+    prog_match = re.search(r"\b(EB009|EB809|EB011|EB811|EB022|EB822)\b", text.upper())
+    prog = prog_match.group(1) if prog_match else default_program
+
+    gpa_match = re.search(r"(?:CUMULATIVE|WEIGHTED|GPA)[^\d]{0,20}(\d{2}(?:\.\d{1,2})?)", text.upper())
+    gpa_val = float(gpa_match.group(1)) if gpa_match else default_gpa
+
+    current_yr_ctx = default_start_year
+    years_seen: Set[int] = set()
+    courses_found: List[Dict[str, Any]] = []
+    course_re = re.compile(r"\b([A-Z]{3}[0-9]{4}[A-Z])\b")
+    year_re = re.compile(r"\b(201[89]|202[0-9])\b")
+
+    for line in text.splitlines():
+        up = line.upper()
+        ym = year_re.search(up)
+        if ym and not course_re.search(up):
+            current_yr_ctx = int(ym.group(1))
+            years_seen.add(current_yr_ctx)
+
+        for cm in course_re.finditer(up):
+            code = cm.group(1)
+            if code.endswith("_P"):
+                continue
+            tail = up[cm.end():cm.end() + 65]
+            ym_inline = year_re.search(up[:cm.start()]) or year_re.search(tail)
+            yt = int(ym_inline.group(1)) if ym_inline else current_yr_ctx
+            years_seen.add(yt)
+
+            # Detect mark or result symbol on the remainder of the line
+            sym_m = re.search(r"\b(\d{2,3}S?)\b|\b(PA|UP|50C|EX|CR|FS|SF|OSS|DE|OS|UF|DPR|AB|F)\b", tail)
+            perc = "PA"
+            symbol = "PA"
+            if sym_m:
+                tok = sym_m.group(1) or sym_m.group(2)
+                if tok.endswith("S") and tok[:-1].isdigit():
+                    perc, symbol = tok, "FS"
+                elif tok.isdigit():
+                    val = int(tok)
+                    if 0 <= val <= 100:
+                        perc = str(val)
+                        symbol = "PA" if val >= 50 else "F"
+                elif tok in {"FS", "SF", "OSS", "DE", "OS"}:
+                    perc, symbol = ("46S" if tok == "FS" else tok), tok
+                elif tok in {"UF", "DPR", "AB", "F"}:
+                    perc, symbol = tok, "F"
+                else:
+                    perc, symbol = tok, "PA"
+
+            courses_found.append({"course": code, "yt": yt, "perc": perc, "symbol": symbol})
+
+    if not courses_found:
+        return json.dumps({"error": "No UCT course codes (e.g. MAM1020F, EEE2045F) found in pasted text."})
+
+    start_yr = min(years_seen) if years_seen else default_start_year
+    curr_yr = max(years_seen) if years_seen else max(start_yr, 2026)
+    return json.dumps({
+        "program": prog,
+        "first_eee_reg": start_yr,
+        "current_year": curr_yr,
+        "gpa": round(gpa_val, 2),
+        "courses": courses_found,
+    })
+
+
+def run_student_planner_audit(req_json: str) -> str:
+    """
+    Browser/Pyodide entry point for the Student Self-Service Planner (`student.html`).
+    Always enforces `--student-mode` disclaimers and single-student privacy.
+    """
+    req = json.loads(req_json)
+    prog = str(req.get("program", "EB009")).strip().upper()
+    start_yr = int(req.get("first_eee_reg", 2025))
+    curr_yr = max(start_yr, int(req.get("current_year", 2026)))
+    gpa_val = float(req.get("gpa", 65.0))
+    courses_in = req.get("courses", [])
+    prop_clean = [str(c).strip().upper() for c in req.get("propose_courses", []) if str(c).strip()]
+
+    # Handle brand-new 1st-year planner with zero completed/current courses yet
+    if not courses_in:
+        pv = evaluate_registration_proposal(
+            prop_clean,
+            passed_courses=set(),
+            program_code=prog,
+            yfdreg=start_yr,
+        )
+        chk = json.loads(get_student_program_checklist(prog, start_yr))
+        cands = []
+        for grp_key, label in (("year1", "Year 1 Core"), ("year2", "Year 2 Core"), ("year3", "Year 3 Core"), ("year4", "Year 4 Core"), ("electives", "Elective")):
+            for item in chk["groups"][grp_key]:
+                cands.append({**item, "category": label, "note": "Not yet taken"})
+        return json.dumps(_clean_for_json({
+            "empty_record": True,
+            "program_code": prog,
+            "program_name": PROG_DESCRIPTIONS.get(prog, prog),
+            "first_eee_reg": start_yr,
+            "required_credits": chk["required_credits"],
+            "proposal_validation": pv,
+            "candidates": cands,
+            "student_markdown": (
+                f"# Student Planning Draft ({prog}, entry {start_yr})\n"
+                f"- Completed EEE credits: 0 / {chk['required_credits']}\n"
+                f"- Proposed courses ({pv['total_proposed_credits']} cr): {', '.join(prop_clean) or 'None'}\n"
+            ),
+        }))
+
+    ayos_names = {1: "First Year", 2: "Second Yr", 3: "Third Year", 4: "Fourth Yr", 5: "Fifth Year"}
+    years_list = []
+    for idx, yr in enumerate(range(start_yr, curr_yr + 1), start=1):
+        years_list.append({
+            "yr": yr,
+            "tt": "R",
+            "preg": prog,
+            "pnam": PROG_DESCRIPTIONS.get(prog, prog),
+            "ayosn": ayos_names.get(idx, f"Year {idx}"),
+            "pcode": "CONT" if yr < curr_yr else "",
+            "Cum": gpa_val,
+            "Wghtd": gpa_val,
+            "Term": gpa_val,
+        })
+
+    strec = build_synthetic_record({
+        "campus_id": "STUDENT",
+        "name": "Your Degree Plan",
+        "empl_id": "",
+        "program": prog,
+        "gpa": gpa_val,
+        "years": years_list,
+        "courses": [
+            {
+                **c,
+                "coursen": STATIC_COURSE_TITLES.get(str(c["course"]).upper(), str(c["course"]).upper()),
+            }
+            for c in courses_in
+        ],
+    })
+
+    feco = FECCheck([strec], phase="eoy-exam")
+    if not feco.stinfo:
+        return json.dumps({"error": "Could not evaluate course list."})
+
+    st0 = feco.stinfo[0]
+    srecp_df, _ = feco.getsrecp(st0["srec"])
+    passed_codes = set(srecp_df["course"].astype(str).tolist())
+
+    audit = build_audit_dict(
+        feco,
+        st0,
+        course_titles=STATIC_COURSE_TITLES,
+        propose_courses=prop_clean,
+        include_full_history=False,
+    )
+    if "proposal_validation" not in audit:
+        audit["proposal_validation"] = evaluate_registration_proposal(
+            prop_clean,
+            passed_courses=passed_codes,
+            program_code=prog,
+            yfdreg=start_yr,
+        )
+
+    candidates: List[Dict[str, Any]] = []
+    seen_cand: Set[str] = set()
+    for item in audit["certification"]["outstanding_cores"] + audit["certification"]["active_cores"]:
+        code = item["code"]
+        if code == "COMPSTUD" or code in seen_cand:
+            continue
+        seen_cand.add(code)
+        candidates.append({
+            "code": code,
+            "title": STATIC_COURSE_TITLES.get(code, code),
+            "credits": COURSE_CREDITS.get(code, 16),
+            "category": "Core",
+            "note": item["status"],
+        })
+    for grp in audit["certification"]["necore"]:
+        for code in grp["options"]:
+            sat, _ = is_req_token_satisfied(code, passed_codes)
+            if not sat and code not in seen_cand:
+                seen_cand.add(code)
+                candidates.append({
+                    "code": code,
+                    "title": STATIC_COURSE_TITLES.get(code, code),
+                    "credits": COURSE_CREDITS.get(code, 16),
+                    "category": f"Specialist ({grp['id']})",
+                    "note": f"Need {grp['required_count']} from list",
+                })
+    for grp in audit["certification"]["cecore"]:
+        for code in grp["options"]:
+            sat, _ = is_req_token_satisfied(code, passed_codes)
+            if not sat and code not in seen_cand:
+                seen_cand.add(code)
+                candidates.append({
+                    "code": code,
+                    "title": STATIC_COURSE_TITLES.get(code, code),
+                    "credits": COURSE_CREDITS.get(code, 16),
+                    "category": "Elective (48cr basket)",
+                    "note": f"{grp['earned_credits']:.0f}/{grp['required_credits']} cr earned",
+                })
+
+    student_md = render_audit_markdown(audit, student_mode=True)
+    return json.dumps(_clean_for_json({
+        "empty_record": False,
+        "audit": audit,
+        "candidates": candidates,
+        "student_markdown": student_md,
     }))
 
 

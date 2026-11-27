@@ -137,6 +137,9 @@ import advise_student
 
     const metaJson = await pyodide.runPythonAsync(`advise_student.get_catalog_metadata()`);
     catalogMeta = JSON.parse(metaJson);
+    if (catalogMeta.titles) {
+      courseTitlesMap = { ...catalogMeta.titles, ...courseTitlesMap };
+    }
     populateCourseDatalist();
 
     pyodideReady = true;
