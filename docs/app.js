@@ -1,4 +1,4 @@
-/* UCT EEE Browser Advising & SEAT Registration Workspace (Pyodide + IndexedDB) */
+/* UNSEAT — Undergraduate Student Enrolment & Advising Tool (UCT EEE, Pyodide + IndexedDB) */
 
 const EEE_PROGS = new Set(["EB009", "EB809", "EB011", "EB811", "EB022", "EB822"]);
 const DB_NAME = "uct_eee_feccheck_db";
@@ -904,8 +904,8 @@ function renderCertificate() {
     <div class="cert-header">
       <div>
         <h2>UCT Department of Electrical Engineering</h2>
-        <div style="font-weight:600; margin-top:0.15rem;">Provisional Curriculum &amp; Advising Verification (${escapeHtml(regYear)} Registration)</div>
-        <div style="font-size:0.8rem; color:#475569;">Supporting verification sheet for PeopleSoft student registration / concession attachment</div>
+        <div style="font-weight:600; margin-top:0.15rem;">UNSEAT Provisional Curriculum &amp; Advising Verification (${escapeHtml(regYear)} Registration)</div>
+        <div style="font-size:0.8rem; color:#475569;">Undergraduate Student Enrolment &amp; Advising Tool — PeopleSoft registration / concession attachment</div>
       </div>
       <div style="text-align:right; font-size:0.82rem;">
         <div><strong>Date:</strong> ${escapeHtml(nowStr)}</div>
@@ -972,7 +972,7 @@ async function copyCertificateText() {
   const concessions = collectConcessions(audit);
 
   const lines = [
-    `UCT EEE PROVISIONAL REGISTRATION SUMMARY (${regYear})`,
+    `UCT EEE PROVISIONAL REGISTRATION SUMMARY — UNSEAT (${regYear})`,
     `Student: ${p.name} (${p.campus_id}) | Programme: ${p.program_code} | Entry: ${p.first_eee_reg}`,
     `FECCheck Standing: ${s.fec_decision_pc} | EEE Credits: ${s.totalcr}/${s.rcurcr} | GPA: ${s.gpa.toFixed(2)}%`,
     ``,

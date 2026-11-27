@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UCT EEE Staff Advising &amp; Provisional Registration (FECCheck)</title>
+  <title>UNSEAT — UCT EEE Undergraduate Student Enrolment &amp; Advising Tool</title>
   <link rel="stylesheet" href="./styles.css" />
   <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 </head>
 <body>
   <header class="topbar no-print">
     <div>
-      <h1>UCT EEE Academic Advising &amp; Registration Tool</h1>
-      <div class="sub">Deterministic <code>FECCheck</code> Audit • 2026 Timetable &amp; Prerequisite Verifier • PeopleSoft Provisional Certificate</div>
+      <h1>UNSEAT <span style="font-weight:400; font-size:0.95rem; opacity:0.92;">— Undergraduate Student Enrolment &amp; Advising Tool</span></h1>
+      <div class="sub">UCT Electrical Engineering • Deterministic <code>FECCheck</code> Audit • 2026 Timetable &amp; Prerequisite Verifier • PeopleSoft Certificate</div>
     </div>
     <div class="status-pills">
       <span class="pill warn" id="engineStatus">Loading Python Engine…</span>
@@ -77,7 +77,7 @@
     <div id="workspaceArea" style="display:none;">
       <nav class="tabs no-print">
         <button class="tab-btn active" data-tab="tab-audit" onclick="switchTab('tab-audit')">1. Academic Standing &amp; Degree Audit</button>
-        <button class="tab-btn" data-tab="tab-reg" onclick="switchTab('tab-reg')">2. Proposed Registration &amp; Clashes (SEAT)</button>
+        <button class="tab-btn" data-tab="tab-reg" onclick="switchTab('tab-reg')">2. Proposed Registration &amp; Clashes (UNSEAT)</button>
         <button class="tab-btn" data-tab="tab-cert" onclick="switchTab('tab-cert')">3. PeopleSoft Certificate &amp; Concessions</button>
         <button class="tab-btn" data-tab="tab-ai" onclick="switchTab('tab-ai')">4. Ask Free AI Staff Advisor (POPIA-Safe)</button>
       </nav>
