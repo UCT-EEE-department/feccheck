@@ -1,4 +1,4 @@
-name: Deploy Advising Web App to GitHub Pages
+name: "Deploy UNSEAT to GitHub Pages"
 
 on:
   push:
@@ -21,18 +21,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install minimal runtime dependencies (Pyodide parity: pandas + numpy only)
+      - name: "Install minimal runtime dependencies"
         run: pip install pandas numpy
 
-      - name: Smoke test Pyodide entry points & POPIA redaction
+      - name: "Smoke test Pyodide entry points and POPIA redaction"
         run: |
           python3 - <<'EOF'
           import json, sys
@@ -61,7 +61,7 @@ jobs:
           print("Smoke test passed cleanly.")
           EOF
 
-      - name: Assemble static _site bundle
+      - name: "Assemble static _site bundle"
         run: |
           rm -rf _site
           mkdir -p _site/py
@@ -69,24 +69,24 @@ jobs:
           cp program_defs.py crs_parser.py fec_check.py timetable_schedule.json uct_ee_staffadvisor.md _site/py/
           cp .agents/skills/staffadvisor/scripts/advise_student.py _site/py/advise_student.py
 
-      - name: Hard POPIA CI Gate (block any student data files)
+      - name: "Hard POPIA CI Gate"
         run: |
           FOUND=$(find _site -type f \( -iname "*.csv" -o -iname "*.xlsx" -o -iname "*.xls" -o -iname "*.tsv" \))
           if [ -n "$FOUND" ]; then
-            echo "CRITICAL POPIA VIOLATION: Tabular data file found in _site:"
+            echo "CRITICAL POPIA VIOLATION - Tabular data file found in _site"
             echo "$FOUND"
             exit 1
           fi
-          echo "POPIA check passed: zero tabular/CRS files in _site."
+          echo "POPIA check passed - zero tabular/CRS files in _site."
 
-      - name: Configure Pages
+      - name: "Configure Pages"
         uses: actions/configure-pages@v5
 
-      - name: Upload Pages artifact
+      - name: "Upload Pages artifact"
         uses: actions/upload-pages-artifact@v3
         with:
           path: "_site"
 
-      - name: Deploy to GitHub Pages
+      - name: "Deploy to GitHub Pages"
         id: deployment
         uses: actions/deploy-pages@v4
